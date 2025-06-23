@@ -1,0 +1,43 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Environment variables
+*.env
+
+# Logs
+*.log
+
+# IDE/editor config
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test/report files
+htmlcov/
+coverage.xml
+*.cover
+.pytest_cache/
+
+# Migrations (optional, if using Alembic or Django-like setup)
+migrations/
+
+# Compiled files
+*.egg-info/
+build/
+dist/
+
+# Database (optional, if using SQLite)
+*.sqlite3
+*.db
