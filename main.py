@@ -3,8 +3,7 @@ from typing import Optional
 import models
 import schemas
 from database import engine
-from sqlmodel import Session
-
+from sqlmodel import Session, select
 app= FastAPI()
 
 # Create tables
@@ -31,3 +30,9 @@ def admitPatient(req: schemas.PatientDetailsSchema, db: Session= Depends(get_ses
     db.commit()
     db.refresh(new_patient)
     return new_patient
+
+
+@app.get('/patient')
+def get_patient(db: Session = Depends(get_session)):
+    patient= db.exec(select(models.PatientDetails)).all()
+    return patient
