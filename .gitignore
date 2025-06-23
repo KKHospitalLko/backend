@@ -1,43 +1,11 @@
-# Byte-compiled / cache files
+# Ignore .env file containing sensitive information
+.env
+
+# Ignore Python bytecode files
 __pycache__/
-*.py[cod]
-*.so
 
-# Virtual environments
-venv/
-env/
-.venv/
-.env/
+# Ignore virtual environment directory
+backendenv/
 
-# Environment variables
-*.env
-
-# Logs
-*.log
-
-# IDE/editor config
-.vscode/
-.idea/
-*.swp
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Test/report files
-htmlcov/
-coverage.xml
-*.cover
-.pytest_cache/
-
-# Migrations (optional, if using Alembic or Django-like setup)
-migrations/
-
-# Compiled files
-*.egg-info/
-build/
-dist/
-
-# Database (optional, if using SQLite)
-*.sqlite3
-*.db
+# Ignore database file
+kkHospital.db
