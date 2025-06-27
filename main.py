@@ -68,7 +68,7 @@ def create_patient(req: schemas.PatientDetailsCreateSchema, db: Session = Depend
     db.refresh(new_patient)
     return new_patient
 
-@app.get('/patient/uhid/{uhid}', response_model=schemas.PatientDetailsResponseSchema)
+@app.get('/patient/{uhid}', response_model=schemas.PatientDetailsResponseSchema)
 def get_patient_by_uhid(uhid: str, db: Session = Depends(get_session)):
     result = db.exec(select(models.PatientDetails).where(models.PatientDetails.uhid == uhid).order_by(models.PatientDetails.regno.desc()))
     patient = result.first()
@@ -76,7 +76,7 @@ def get_patient_by_uhid(uhid: str, db: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail=f"Patient with UHID {uhid} not found")
     return patient
 
-@app.put('/patient/uhid/{uhid}', response_model=schemas.PatientDetailsResponseSchema)
+@app.put('/patient/{uhid}', response_model=schemas.PatientDetailsResponseSchema)
 def update_patient_by_uhid(uhid: str, req: schemas.PatientDetailsUpdateSchema, db: Session = Depends(get_session)):
     # Find the latest patient record by UHID
     result = db.exec(select(models.PatientDetails).where(models.PatientDetails.uhid == uhid).order_by(models.PatientDetails.regno.desc()))
@@ -111,11 +111,3 @@ def update_patient_by_uhid(uhid: str, req: schemas.PatientDetailsUpdateSchema, d
 def get_all_patients(db: Session = Depends(get_session)):
     result = db.exec(select(models.PatientDetails))
     return result.all()
-
-@app.get('/patient/{regno}', response_model=list[schemas.PatientDetailsResponseSchema])
-def get_patient_by_regno(regno: int, db: Session = Depends(get_session)):
-    result = db.exec(select(models.PatientDetails).where(models.PatientDetails.regno == regno))
-    patients = result.all()
-    if not patients:
-        raise HTTPException(status_code=404, detail=f"Patient with registration number {regno} not found")
-    return patients
