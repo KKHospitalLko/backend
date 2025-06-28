@@ -5,8 +5,6 @@ import schemas
 from database import engine
 from sqlmodel import Session, select
 from datetime import datetime
-from sqlalchemy.exc import OperationalError
-import time
 
 app = FastAPI()
 
@@ -61,20 +59,53 @@ def create_patient(req: schemas.PatientDetailsCreateSchema, db: Session = Depend
         sex=req.sex,
         mobile=req.mobile,
         dateofreg=req.dateofreg,
-        regno=regno
+        regno=regno,
+        time=req.time,
+        age=req.age,
+        occupation=req.occupation,
+        empanelment=req.empanelment,
+        bloodGroup=req.bloodGroup,
+        religion=req.religion,
+        intimationOrExtension=req.intimationOrExtension,
+        maritalStatus=req.maritalStatus,
+        fatherHusband=req.fatherHusband,
+        refDocName=req.refDocName,
+        refDocTel=req.refDocTel,
+        purposeForVisit=req.purposeForVisit,
+        doctorIncharge=req.doctorIncharge,
+        regAmount=req.regAmount,
+        notes=req.notes,
+        localAddress=req.localAddress.model_dump() if req.localAddress else None,
+        permanentAddress=req.permanentAddress.model_dump() if req.permanentAddress else None
     )
     db.add(new_patient)
     db.commit()
     db.refresh(new_patient)
     return new_patient
 
-@app.get('/patient/{uhid}', response_model=schemas.PatientDetailsResponseSchema)
-def get_patient_by_uhid(uhid: str, db: Session = Depends(get_session)):
-    result = db.exec(select(models.PatientDetails).where(models.PatientDetails.uhid == uhid).order_by(models.PatientDetails.regno.desc()))
-    patient = result.first()
-    if not patient:
-        raise HTTPException(status_code=404, detail=f"Patient with UHID {uhid} not found")
-    return patient
+@app.get('/patient/{search_value}', response_model=list[schemas.PatientDetailsResponseSchema])
+def get_patient_by_uhid_or_mobile(search_value: str, db: Session = Depends(get_session)):
+    # Try converting search_value to int to check if it could be a mobile number
+    try:
+        mobile_value = int(search_value)
+    except ValueError:
+        mobile_value = None
+
+    # Build query to search by uhid or mobile
+    query = select(models.PatientDetails)
+    if mobile_value is not None:
+        query = query.where(
+            (models.PatientDetails.uhid == search_value) |
+            (models.PatientDetails.mobile == mobile_value)
+        )
+    else:
+        query = query.where(models.PatientDetails.uhid == search_value)
+
+    result = db.exec(query.order_by(models.PatientDetails.regno.desc()))
+    patients = result.all()
+    if not patients:
+        raise HTTPException(status_code=404, detail=f"No patients found with UHID or mobile {search_value}")
+    return patients
 
 @app.put('/patient/{uhid}', response_model=schemas.PatientDetailsResponseSchema)
 def update_patient_by_uhid(uhid: str, req: schemas.PatientDetailsUpdateSchema, db: Session = Depends(get_session)):
@@ -99,7 +130,24 @@ def update_patient_by_uhid(uhid: str, req: schemas.PatientDetailsUpdateSchema, d
         sex=req.sex,
         mobile=req.mobile,
         dateofreg=req.dateofreg,
-        regno=new_regno
+        regno=new_regno,
+        time=req.time,
+        age=req.age,
+        occupation=req.occupation,
+        empanelment=req.empanelment,
+        bloodGroup=req.bloodGroup,
+        religion=req.religion,
+        intimationOrExtension=req.intimationOrExtension,
+        maritalStatus=req.maritalStatus,
+        fatherHusband=req.fatherHusband,
+        refDocName=req.refDocName,
+        refDocTel=req.refDocTel,
+        purposeForVisit=req.purposeForVisit,
+        doctorIncharge=req.doctorIncharge,
+        regAmount=req.regAmount,
+        notes=req.notes,
+        localAddress=req.localAddress.model_dump() if req.localAddress else None,
+        permanentAddress=req.permanentAddress.model_dump() if req.permanentAddress else None
     )
     
     db.add(new_patient)
