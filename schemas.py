@@ -1,19 +1,21 @@
 from sqlmodel import SQLModel
-from typing import Optional
+from typing import Optional, List
 from pydantic import field_validator, field_serializer
 from datetime import datetime
 
 class Address(SQLModel):
     address: Optional[str] = None
     city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
     zip: Optional[int] = None
-    email: Optional[str] = None
+    # email: Optional[str] = None
 
-    @field_validator('email', mode='before')
-    def handle_empty_email(cls, v):
-        return None if v == "" else v
+    # @field_validator('email', mode='before')
+    # def handle_empty_email(cls, v):
+    #     return None if v == "" else v
 
-    @field_validator('address', 'city', mode='before')
+    @field_validator('address', 'city', 'state', 'country', mode='before')
     def check_non_empty(cls, v):
         return None if not v or v.strip() == "" else v
 
@@ -24,7 +26,6 @@ class Address(SQLModel):
 class PatientDetailsCreateSchema(SQLModel):
     title: Optional[str] = None
     fullname: str
-    department: str
     sex: Optional[str] = None
     mobile: Optional[int] = None
     dateofreg: Optional[str] = None
@@ -37,12 +38,8 @@ class PatientDetailsCreateSchema(SQLModel):
     intimationOrExtension: str
     maritalStatus: str
     fatherHusband: str
-    refDocName: str
-    refDocTel: Optional[int] = None  # Changed from int to Optional[int]
-    purposeForVisit: str
-    doctorIncharge: str
+    doctorIncharge: List[str]
     regAmount: int
-    notes: str
     localAddress: Address
     permanentAddress: Address
 
@@ -50,7 +47,7 @@ class PatientDetailsCreateSchema(SQLModel):
     def handle_empty_string(cls, v):
         return None if v == "" else v
 
-    @field_validator('mobile', 'age', 'refDocTel', mode='before')
+    @field_validator('mobile', 'age', mode='before')
     def handle_invalid_number(cls, v):
         return None if v == 0 else v
 
@@ -72,16 +69,21 @@ class PatientDetailsCreateSchema(SQLModel):
                 raise ValueError("time must be in HH:MM:SS format")
         return v or datetime.now().strftime("%H:%M:%S")
 
-    @field_validator('fullname', 'department', 'religion', 'intimationOrExtension', 'maritalStatus', 'fatherHusband', 'refDocName', 'purposeForVisit', 'doctorIncharge', 'notes', mode='before')
+    @field_validator('fullname', 'religion', 'intimationOrExtension', 'maritalStatus', 'fatherHusband', mode='before')
     def check_non_empty(cls, v):
         if not v.strip():
             raise ValueError("Value cannot be empty")
         return v
 
+    @field_validator('doctorIncharge', mode='before')
+    def check_non_empty_doctorIncharge(cls, v):
+        if not v or not all(s.strip() for s in v):
+            raise ValueError("doctorIncharge list cannot be empty or contain empty strings")
+        return v
+
 class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     title: Optional[str] = None
     fullname: Optional[str] = None
-    department: Optional[str] = None
     sex: Optional[str] = None
     mobile: Optional[int] = None
     dateofreg: Optional[str] = None
@@ -94,12 +96,8 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     intimationOrExtension: Optional[str] = None
     maritalStatus: Optional[str] = None
     fatherHusband: Optional[str] = None
-    refDocName: Optional[str] = None
-    refDocTel: Optional[int] = None
-    purposeForVisit: Optional[str] = None
-    doctorIncharge: Optional[str] = None
+    doctorIncharge: Optional[List[str]] = None
     regAmount: Optional[int] = None
-    notes: Optional[str] = None
     localAddress: Optional[Address] = None
     permanentAddress: Optional[Address] = None
 
@@ -107,7 +105,6 @@ class PatientDetailsResponseSchema(SQLModel):
     uhid: Optional[str] = None
     title: Optional[str] = None
     fullname: str
-    department: str
     sex: Optional[str] = None
     mobile: Optional[int] = None
     dateofreg: str
@@ -121,12 +118,8 @@ class PatientDetailsResponseSchema(SQLModel):
     intimationOrExtension: str
     maritalStatus: str
     fatherHusband: str
-    refDocName: str
-    refDocTel: Optional[int] = None  # Changed from int to Optional[int]
-    purposeForVisit: str
-    doctorIncharge: str
+    doctorIncharge: List[str]
     regAmount: int
-    notes: str
     localAddress: Address
     permanentAddress: Address
 

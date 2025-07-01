@@ -55,7 +55,6 @@ def create_patient(req: schemas.PatientDetailsCreateSchema, db: Session = Depend
         uhid=uhid,
         title=req.title,
         fullname=req.fullname,
-        department=req.department,
         sex=req.sex,
         mobile=req.mobile,
         dateofreg=req.dateofreg,
@@ -69,12 +68,8 @@ def create_patient(req: schemas.PatientDetailsCreateSchema, db: Session = Depend
         intimationOrExtension=req.intimationOrExtension,
         maritalStatus=req.maritalStatus,
         fatherHusband=req.fatherHusband,
-        refDocName=req.refDocName,
-        refDocTel=req.refDocTel,
-        purposeForVisit=req.purposeForVisit,
         doctorIncharge=req.doctorIncharge,
         regAmount=req.regAmount,
-        notes=req.notes,
         localAddress=req.localAddress.model_dump() if req.localAddress else None,
         permanentAddress=req.permanentAddress.model_dump() if req.permanentAddress else None
     )
@@ -126,7 +121,6 @@ def update_patient_by_uhid(uhid: str, req: schemas.PatientDetailsUpdateSchema, d
         uhid=new_uhid,
         title=req.title,
         fullname=req.fullname,
-        department=req.department,
         sex=req.sex,
         mobile=req.mobile,
         dateofreg=req.dateofreg,
@@ -140,12 +134,8 @@ def update_patient_by_uhid(uhid: str, req: schemas.PatientDetailsUpdateSchema, d
         intimationOrExtension=req.intimationOrExtension,
         maritalStatus=req.maritalStatus,
         fatherHusband=req.fatherHusband,
-        refDocName=req.refDocName,
-        refDocTel=req.refDocTel,
-        purposeForVisit=req.purposeForVisit,
         doctorIncharge=req.doctorIncharge,
         regAmount=req.regAmount,
-        notes=req.notes,
         localAddress=req.localAddress.model_dump() if req.localAddress else None,
         permanentAddress=req.permanentAddress.model_dump() if req.permanentAddress else None
     )

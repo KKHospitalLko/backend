@@ -7,7 +7,6 @@ class PatientDetails(SQLModel, table=True):
     uhid: Optional[str] = Field(default=None, index=True)  # No unique constraint
     title: Optional[str] = None
     fullname: str
-    department: str
     sex: Optional[str] = None
     mobile: Optional[int] = None
     dateofreg: str
@@ -21,11 +20,7 @@ class PatientDetails(SQLModel, table=True):
     intimationOrExtension: str
     maritalStatus: str
     fatherHusband: str
-    refDocName: str
-    refDocTel: Optional[int] = None  # Changed from int to Optional[int]
-    purposeForVisit: str
-    doctorIncharge: str
+    doctorIncharge: Optional[list[str]] = Field(default=None, sa_type=JSON)
     regAmount: int
-    notes: str
     localAddress: Optional[dict] = Field(default=None, sa_type=JSON)
     permanentAddress: Optional[dict] = Field(default=None, sa_type=JSON)
