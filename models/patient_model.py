@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import JSON
 
 class PatientDetails(SQLModel, table=True):
@@ -13,14 +13,13 @@ class PatientDetails(SQLModel, table=True):
     regno: Optional[int] = None
     time: Optional[str] = None
     age: Optional[int] = None
-    occupation: Optional[str] = None
     empanelment: Optional[str] = None
     bloodGroup: Optional[str] = None
     religion: str
-    intimationOrExtension: str
     maritalStatus: str
     fatherHusband: str
-    doctorIncharge: Optional[list[str]] = Field(default=None, sa_type=JSON)
+    doctorIncharge: Optional[List[str]] = Field(default=None, sa_type=JSON)
     regAmount: int
     localAddress: Optional[dict] = Field(default=None, sa_type=JSON)
     permanentAddress: Optional[dict] = Field(default=None, sa_type=JSON)
+    registered_by: str

@@ -1,3 +1,5 @@
 FastAPI
 uvicorn
 sqlmodel
+python-dotenv
+psycopg2

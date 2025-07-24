@@ -9,11 +9,6 @@ class Address(SQLModel):
     state: Optional[str] = None
     country: Optional[str] = None
     zip: Optional[int] = None
-    # email: Optional[str] = None
-
-    # @field_validator('email', mode='before')
-    # def handle_empty_email(cls, v):
-    #     return None if v == "" else v
 
     @field_validator('address', 'city', 'state', 'country', mode='before')
     def check_non_empty(cls, v):
@@ -31,21 +26,22 @@ class PatientDetailsCreateSchema(SQLModel):
     dateofreg: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
-    occupation: Optional[str] = None
     empanelment: Optional[str] = None
     bloodGroup: Optional[str] = None
     religion: str
-    intimationOrExtension: str
     maritalStatus: str
     fatherHusband: str
     doctorIncharge: List[str]
     regAmount: int
     localAddress: Address
     permanentAddress: Address
+    registered_by: str  # Required field
 
-    @field_validator('title', 'occupation', 'empanelment', 'bloodGroup', mode='before')
+    @field_validator('title', 'empanelment', 'bloodGroup', 'registered_by', mode='before')
     def handle_empty_string(cls, v):
-        return None if v == "" else v
+        if not v or v.strip() == "":
+            raise ValueError(f"{cls.__fields__[cls.__fields__.get_field_name_by_alias('registered_by')].alias} cannot be empty")
+        return v
 
     @field_validator('mobile', 'age', mode='before')
     def handle_invalid_number(cls, v):
@@ -64,22 +60,14 @@ class PatientDetailsCreateSchema(SQLModel):
     def handle_invalid_time(cls, v):
         if v and v != "string":
             try:
-                datetime.strptime(v, "%H:%M:%S")
+                datetime.strptime(v, "%I:%M:%S %p")
             except ValueError:
-                raise ValueError("time must be in HH:MM:SS format")
-        return v or datetime.now().strftime("%H:%M:%S")
-
-    @field_validator('fullname', 'religion', 'intimationOrExtension', 'maritalStatus', 'fatherHusband', mode='before')
-    def check_non_empty(cls, v):
-        if not v.strip():
-            raise ValueError("Value cannot be empty")
-        return v
-
-    @field_validator('doctorIncharge', mode='before')
-    def check_non_empty_doctorIncharge(cls, v):
-        if not v or not all(s.strip() for s in v):
-            raise ValueError("doctorIncharge list cannot be empty or contain empty strings")
-        return v
+                try:
+                    parsed_time = datetime.strptime(v, "%H:%M:%S")
+                    return parsed_time.strftime("%I:%M:%S %p")
+                except ValueError:
+                    raise ValueError("time must be in HH:MM:SS (24-hour) or HH:MM:SS AM/PM (12-hour) format")
+        return v or datetime.now().strftime("%I:%M:%S %p")
 
 class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     title: Optional[str] = None
@@ -89,19 +77,29 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     dateofreg: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
-    occupation: Optional[str] = None
     empanelment: Optional[str] = None
     bloodGroup: Optional[str] = None
     religion: Optional[str] = None
-    intimationOrExtension: Optional[str] = None
     maritalStatus: Optional[str] = None
     fatherHusband: Optional[str] = None
     doctorIncharge: Optional[List[str]] = None
     regAmount: Optional[int] = None
     localAddress: Optional[Address] = None
     permanentAddress: Optional[Address] = None
+    registered_by: Optional[str] = None  # Optional for updates to preserve existing value
 
 class PatientDetailsResponseSchema(SQLModel):
+    uhid: Optional[str] = None
+    fullname: str
+    mobile: Optional[int] = None
+    regno: Optional[int] = None
+    registered_by: str  # Required field
+
+    @field_serializer('regno')
+    def serialize_regno(self, regno: Optional[int], _info):
+        return f"{regno:04d}" if regno is not None else None
+
+class PatientDetailsSearchResponseSchema(SQLModel):
     uhid: Optional[str] = None
     title: Optional[str] = None
     fullname: str
@@ -111,17 +109,16 @@ class PatientDetailsResponseSchema(SQLModel):
     regno: Optional[int] = None
     time: Optional[str] = None
     age: Optional[int] = None
-    occupation: Optional[str] = None
     empanelment: Optional[str] = None
     bloodGroup: Optional[str] = None
     religion: str
-    intimationOrExtension: str
     maritalStatus: str
     fatherHusband: str
     doctorIncharge: List[str]
     regAmount: int
     localAddress: Address
     permanentAddress: Address
+    registered_by: str  # Required field
 
     @field_serializer('regno')
     def serialize_regno(self, regno: Optional[int], _info):
