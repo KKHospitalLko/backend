@@ -50,16 +50,7 @@ def generate_ids(db: Session, existing_uhid: Optional[str] = None) -> tuple:
 
 @router.post('/patient', response_model=patient_schemas.PatientDetailsResponseSchema)
 def create_patient(req: patient_schemas.PatientDetailsCreateSchema, db: Session = Depends(get_session)):
-    # Check if mobile number already exists (if provided)
-    if req.mobile is not None:
-        query = select(patient_model.PatientDetails).where(patient_model.PatientDetails.mobile == req.mobile)
-        existing_patient = db.exec(query).first()
-        if existing_patient:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Mobile number {req.mobile} already exists for patient with UHID {existing_patient.uhid}"
-            )
-
+   
     uhid, regno = generate_ids(db)
     new_patient = patient_model.PatientDetails(
         uhid=uhid,
