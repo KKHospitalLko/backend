@@ -58,3 +58,9 @@ def root():
 app.include_router(patient_router, dependencies=[Depends(get_api_key)])
 app.include_router(bed_router, dependencies=[Depends(get_api_key)])
 app.include_router(tpa_router, dependencies=[Depends(get_api_key)])
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))  # Railway sets PORT env var
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
