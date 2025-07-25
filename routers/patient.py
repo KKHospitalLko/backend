@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from datetime import datetime
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 import models.patient_model as patient_model
 import schemas.patient_schemas as patient_schemas
 from database import engine
@@ -23,7 +23,7 @@ create_db_and_tables()
 # Get a session
 def get_session():
     with Session(engine) as session:
-        session.exec("SET TIME ZONE 'Asia/Kolkata';")
+        session.connection().execute(text("SET TIME ZONE 'Asia/Kolkata';"))
         yield session
 
 
