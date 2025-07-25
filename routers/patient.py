@@ -23,6 +23,7 @@ create_db_and_tables()
 # Get a session
 def get_session():
     with Session(engine) as session:
+        session.exec("SET TIME ZONE 'Asia/Kolkata';")
         yield session
 
 
