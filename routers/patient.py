@@ -5,69 +5,87 @@ from sqlmodel import Session, select
 import models.patient_model as patient_model
 import schemas.patient_schemas as patient_schemas
 from database import engine
+import pytz
+
 
 router = APIRouter(tags=["Patient"])
+
 
 # Create tables
 def create_db_and_tables():
     # patient_model.SQLModel.metadata.drop_all(engine)  # Drop existing tables
     patient_model.SQLModel.metadata.create_all(engine)  # Recreate tables
 
+
 create_db_and_tables()
+
 
 # Get a session
 def get_session():
     with Session(engine) as session:
         yield session
 
+
 # Helper function to generate UHID and registration number
 def generate_ids(db: Session, existing_uhid: Optional[str] = None) -> tuple:
-    # Generate UHID: YYMM + 4-digit serial number
-    current_time = datetime.now()
-    time_str = current_time.strftime("%y%m")  # Format: YYMM (e.g., 2507 for July 2025)
+    ist_timezone = pytz.timezone('Asia/Kolkata')
+    current_time_ist = datetime.now(ist_timezone) # Use a different variable name for clarity
+
+
+    time_str = current_time_ist.strftime("%y%m")
+
 
     if existing_uhid:
-        # Reuse existing UHID for returning patient
         new_uhid = existing_uhid
     else:
-        # Get the latest UHID to determine the serial number for the current YYMM
         result = db.exec(select(patient_model.PatientDetails.uhid).order_by(patient_model.PatientDetails.uhid.desc()))
         last_uhid = result.first()
 
-        # Extract serial number from the last UHID or reset to 1 if month changes
-        if last_uhid and last_uhid.startswith(time_str):
-            serial_no = int(last_uhid[-4:]) + 1  # Increment the last 4 digits
-        else:
-            serial_no = 1  # Reset to 0001 for new YYMM
 
-        # Ensure serial_no is 4 digits
+        if last_uhid and last_uhid.startswith(time_str):
+            serial_no = int(last_uhid[-4:]) + 1
+        else:
+            serial_no = 1
         new_uhid = f"{time_str}{serial_no:04d}"
 
-    # Generate registration number (always 1 for new patients)
-    new_regno = 1
 
+    new_regno = 1
     return new_uhid, new_regno
+
 
 @router.post('/patient', response_model=patient_schemas.PatientDetailsResponseSchema)
 def create_patient(req: patient_schemas.PatientDetailsCreateSchema, db: Session = Depends(get_session)):
-   
+
+
     uhid, regno = generate_ids(db)
+
+
+    # Get current IST date and time for dateofreg and time
+    ist_timezone = pytz.timezone('Asia/Kolkata')
+    current_ist_datetime = datetime.now(ist_timezone)
+
+
+    # Convert to string format as your model expects strings
+    date_of_registration = current_ist_datetime.strftime("%Y-%m-%d")  # String format
+    time_of_registration = current_ist_datetime.strftime("%I:%M:%S %p")  # String format
+
+
     new_patient = patient_model.PatientDetails(
         uhid=uhid,
         title=req.title,
         fullname=req.fullname,
         sex=req.sex,
         mobile=req.mobile,
-        dateofreg=req.dateofreg,
+        dateofreg=req.dateofreg or date_of_registration,  # Use provided or current
         regno=regno,
-        time=req.time,
+        time=req.time or time_of_registration,  # Use provided or current
         age=req.age,
         empanelment=req.empanelment,
         bloodGroup=req.bloodGroup,
         religion=req.religion,
         maritalStatus=req.maritalStatus,
         fatherHusband=req.fatherHusband,
-        doctorIncharge=req.doctorIncharge,
+        doctorIncharge=req.doctorIncharge,  # Already a list, no need for model_dump
         regAmount=req.regAmount,
         localAddress=req.localAddress.model_dump() if req.localAddress else None,
         permanentAddress=req.permanentAddress.model_dump() if req.permanentAddress else None,
@@ -78,6 +96,7 @@ def create_patient(req: patient_schemas.PatientDetailsCreateSchema, db: Session 
     db.refresh(new_patient)
     return new_patient
 
+
 @router.get('/patient/{search_value}', response_model=list[patient_schemas.PatientDetailsSearchResponseSchema])
 def get_patient_by_uhid_or_mobile(search_value: str, db: Session = Depends(get_session)):
     # Try converting search_value to int to check if it could be a mobile number
@@ -85,6 +104,7 @@ def get_patient_by_uhid_or_mobile(search_value: str, db: Session = Depends(get_s
         mobile_value = int(search_value)
     except ValueError:
         mobile_value = None
+
 
     # Build query to search by uhid or mobile
     query = select(patient_model.PatientDetails)
@@ -96,11 +116,13 @@ def get_patient_by_uhid_or_mobile(search_value: str, db: Session = Depends(get_s
     else:
         query = query.where(patient_model.PatientDetails.uhid == search_value)
 
+
     result = db.exec(query.order_by(patient_model.PatientDetails.regno.desc()))
     patients = result.all()
     if not patients:
         raise HTTPException(status_code=404, detail=f"No patients found with UHID or mobile {search_value}")
     return patients
+
 
 @router.put('/patient/{uhid}', response_model=patient_schemas.PatientDetailsResponseSchema)
 def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateSchema, db: Session = Depends(get_session)):
@@ -110,11 +132,14 @@ def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateS
     if not existing_patient:
         raise HTTPException(status_code=404, detail=f"Patient with UHID {uhid} not found")
 
+
     # Get current regno and increment it
     new_regno = existing_patient.regno + 1
 
+
     # Reuse the same UHID
     new_uhid, _ = generate_ids(db, existing_uhid=uhid)
+
 
     # Create a new patient record
     new_patient = patient_model.PatientDetails(
@@ -144,9 +169,8 @@ def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateS
     db.refresh(new_patient)
     return new_patient
 
+
 @router.get('/patient', response_model=list[patient_schemas.PatientDetailsSearchResponseSchema])
 def get_all_patients(db: Session = Depends(get_session)):
     result = db.exec(select(patient_model.PatientDetails))
     return result.all()
-
-
