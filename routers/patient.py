@@ -1,40 +1,38 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlmodel import Session, select, text
 import models.patient_model as patient_model
 import schemas.patient_schemas as patient_schemas
 from database import engine
 import pytz
 
-
 router = APIRouter(tags=["Patient"])
-
 
 # Create tables
 def create_db_and_tables():
     patient_model.SQLModel.metadata.drop_all(engine)  # Drop existing tables
     patient_model.SQLModel.metadata.create_all(engine)  # Recreate tables
 
-
 create_db_and_tables()
-
 
 # Get a session
 def get_session():
     with Session(engine) as session:
-        session.connection().execute(text("SET TIME ZONE 'Asia/Kolkata';"))
         yield session
 
+def get_current_ist_time():
+    """Get current IST time reliably regardless of system timezone"""
+    # Use the recommended approach instead of deprecated utcnow()
+    utc_now = datetime.now(timezone.utc)
+    ist_tz = pytz.timezone('Asia/Kolkata')
+    ist_time = utc_now.astimezone(ist_tz)
+    return ist_time
 
 # Helper function to generate UHID and registration number
 def generate_ids(db: Session, existing_uhid: Optional[str] = None) -> tuple:
-    ist_timezone = pytz.timezone('Asia/Kolkata')
-    current_time_ist = datetime.now(ist_timezone) # Use a different variable name for clarity
-
-
+    current_time_ist = get_current_ist_time()  # Use the reliable function
     time_str = current_time_ist.strftime("%y%m")
-
 
     if existing_uhid:
         new_uhid = existing_uhid
@@ -42,34 +40,26 @@ def generate_ids(db: Session, existing_uhid: Optional[str] = None) -> tuple:
         result = db.exec(select(patient_model.PatientDetails.uhid).order_by(patient_model.PatientDetails.uhid.desc()))
         last_uhid = result.first()
 
-
         if last_uhid and last_uhid.startswith(time_str):
             serial_no = int(last_uhid[-4:]) + 1
         else:
             serial_no = 1
         new_uhid = f"{time_str}{serial_no:04d}"
 
-
     new_regno = 1
     return new_uhid, new_regno
-
 
 @router.post('/patient', response_model=patient_schemas.PatientDetailsResponseSchema)
 def create_patient(req: patient_schemas.PatientDetailsCreateSchema, db: Session = Depends(get_session)):
 
-
     uhid, regno = generate_ids(db)
 
-
-    # Get current IST date and time for dateofreg and time
-    ist_timezone = pytz.timezone('Asia/Kolkata')
-    current_ist_datetime = datetime.now(ist_timezone)
-
+    # Use the reliable IST time function
+    current_ist_datetime = get_current_ist_time()
 
     # Convert to string format as your model expects strings
     date_of_registration = current_ist_datetime.strftime("%Y-%m-%d")  # String format
     time_of_registration = current_ist_datetime.strftime("%I:%M:%S %p")  # String format
-
 
     new_patient = patient_model.PatientDetails(
         uhid=uhid,
@@ -97,7 +87,22 @@ def create_patient(req: patient_schemas.PatientDetailsCreateSchema, db: Session 
     db.refresh(new_patient)
     return new_patient
 
+# Add this debug endpoint to verify the fix
+@router.get('/debug-time')
+def debug_time():
+    import os
+    current_ist = get_current_ist_time()
+    utc_now = datetime.utcnow()
+    
+    return {
+        "utc_time": utc_now.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "ist_time": current_ist.strftime("%Y-%m-%d %H:%M:%S IST"),
+        "formatted_time": current_ist.strftime("%I:%M:%S %p"),
+        "TZ_env": os.environ.get('TZ', 'Not Set'),
+        "system_timezone": str(datetime.now().astimezone().tzinfo)
+    }
 
+# Rest of your code remains the same...
 @router.get('/patient/{search_value}', response_model=list[patient_schemas.PatientDetailsSearchResponseSchema])
 def get_patient_by_uhid_or_mobile(search_value: str, db: Session = Depends(get_session)):
     # Try converting search_value to int to check if it could be a mobile number
@@ -105,7 +110,6 @@ def get_patient_by_uhid_or_mobile(search_value: str, db: Session = Depends(get_s
         mobile_value = int(search_value)
     except ValueError:
         mobile_value = None
-
 
     # Build query to search by uhid or mobile
     query = select(patient_model.PatientDetails)
@@ -117,13 +121,11 @@ def get_patient_by_uhid_or_mobile(search_value: str, db: Session = Depends(get_s
     else:
         query = query.where(patient_model.PatientDetails.uhid == search_value)
 
-
     result = db.exec(query.order_by(patient_model.PatientDetails.regno.desc()))
     patients = result.all()
     if not patients:
         raise HTTPException(status_code=404, detail=f"No patients found with UHID or mobile {search_value}")
     return patients
-
 
 @router.put('/patient/{uhid}', response_model=patient_schemas.PatientDetailsResponseSchema)
 def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateSchema, db: Session = Depends(get_session)):
@@ -133,14 +135,11 @@ def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateS
     if not existing_patient:
         raise HTTPException(status_code=404, detail=f"Patient with UHID {uhid} not found")
 
-
     # Get current regno and increment it
     new_regno = existing_patient.regno + 1
 
-
     # Reuse the same UHID
     new_uhid, _ = generate_ids(db, existing_uhid=uhid)
-
 
     # Create a new patient record
     new_patient = patient_model.PatientDetails(
@@ -169,7 +168,6 @@ def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateS
     db.commit()
     db.refresh(new_patient)
     return new_patient
-
 
 @router.get('/patient', response_model=list[patient_schemas.PatientDetailsSearchResponseSchema])
 def get_all_patients(db: Session = Depends(get_session)):
