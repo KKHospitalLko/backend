@@ -9,7 +9,7 @@ router = APIRouter(tags=["Bed"])
 
 # Create tables and initialize beds
 def create_db_and_tables():
-    # BedDetails.metadata.drop_all(engine)  # Drop only beddetails table
+    BedDetails.metadata.drop_all(engine)  # Drop only beddetails table
     BedDetails.metadata.create_all(engine)  # Recreate beddetails table
     # Initialize departments and beds
     with Session(engine) as session:

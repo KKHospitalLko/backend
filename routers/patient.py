@@ -13,7 +13,7 @@ router = APIRouter(tags=["Patient"])
 
 # Create tables
 def create_db_and_tables():
-    # patient_model.SQLModel.metadata.drop_all(engine)  # Drop existing tables
+    patient_model.SQLModel.metadata.drop_all(engine)  # Drop existing tables
     patient_model.SQLModel.metadata.create_all(engine)  # Recreate tables
 
 
