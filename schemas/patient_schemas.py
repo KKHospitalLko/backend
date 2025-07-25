@@ -1,7 +1,9 @@
 from sqlmodel import SQLModel
 from typing import Optional, List
 from pydantic import field_validator, field_serializer
-from datetime import datetime
+from datetime import datetime, timezone
+import pytz
+
 
 class Address(SQLModel):
     address: Optional[str] = None
@@ -17,6 +19,16 @@ class Address(SQLModel):
     @field_validator('zip', mode='before')
     def handle_invalid_zip(cls, v):
         return None if v == 0 else v
+
+
+# Helper function for IST time
+def get_current_ist_time():
+    """Get current IST time reliably"""
+    utc_now = datetime.now(timezone.utc)
+    ist_tz = pytz.timezone('Asia/Kolkata')
+    ist_time = utc_now.astimezone(ist_tz)
+    return ist_time
+
 
 class PatientDetailsCreateSchema(SQLModel):
     title: Optional[str] = None
@@ -40,7 +52,7 @@ class PatientDetailsCreateSchema(SQLModel):
     @field_validator('title', 'empanelment', 'bloodGroup', 'registered_by', mode='before')
     def handle_empty_string(cls, v):
         if not v or v.strip() == "":
-            raise ValueError(f"{cls.__fields__[cls.__fields__.get_field_name_by_alias('registered_by')].alias} cannot be empty")
+            raise ValueError(f"registered_by cannot be empty")
         return v
 
     @field_validator('mobile', 'age', mode='before')
@@ -54,7 +66,8 @@ class PatientDetailsCreateSchema(SQLModel):
                 datetime.strptime(v, "%Y-%m-%d")
             except ValueError:
                 raise ValueError("dateofreg must be in YYYY-MM-DD format")
-        return v or datetime.now().strftime("%Y-%m-%d")
+        # Fix: Use IST time instead of system time
+        return v or get_current_ist_time().strftime("%Y-%m-%d")
 
     @field_validator('time', mode='before')
     def handle_invalid_time(cls, v):
@@ -67,7 +80,9 @@ class PatientDetailsCreateSchema(SQLModel):
                     return parsed_time.strftime("%I:%M:%S %p")
                 except ValueError:
                     raise ValueError("time must be in HH:MM:SS (24-hour) or HH:MM:SS AM/PM (12-hour) format")
-        return v or datetime.now().strftime("%I:%M:%S %p")
+        # Fix: Use IST time instead of system time
+        return v or get_current_ist_time().strftime("%I:%M:%S %p")
+
 
 class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     title: Optional[str] = None
@@ -88,6 +103,7 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     permanentAddress: Optional[Address] = None
     registered_by: Optional[str] = None  # Optional for updates to preserve existing value
 
+
 class PatientDetailsResponseSchema(SQLModel):
     uhid: Optional[str] = None
     fullname: str
@@ -98,6 +114,7 @@ class PatientDetailsResponseSchema(SQLModel):
     @field_serializer('regno')
     def serialize_regno(self, regno: Optional[int], _info):
         return f"{regno:04d}" if regno is not None else None
+
 
 class PatientDetailsSearchResponseSchema(SQLModel):
     uhid: Optional[str] = None
