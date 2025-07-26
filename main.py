@@ -14,7 +14,6 @@ load_dotenv()
 # Get API key from environment variable
 API_KEY = os.getenv("API_KEY")
 
-
 if not API_KEY:
     raise RuntimeError("API_KEY not set in .env file")
 
@@ -28,33 +27,25 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# ✅ CORS middleware FIRST (most important - add this before custom middleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://reception.up.railway.app"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["x-api-key", "content-type", "authorization"],  # Explicitly list headers
+)
 
-# ✅ Custom middleware to handle OPTIONS requests
+# ✅ Custom middleware to handle OPTIONS requests (optional - CORSMiddleware should handle this)
 @app.middleware("http")
 async def handle_options_requests(request: Request, call_next):
     if request.method == "OPTIONS":
-        # Let CORS middleware handle OPTIONS requests
-        response = Response()
-        response.headers["Access-Control-Allow-Origin"] = "https://reception.up.railway.app"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
+        # Return proper response for preflight
+        response = Response(status_code=204)  # 204 No Content is standard for OPTIONS
         return response
     
     response = await call_next(request)
     return response
-
-
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://reception.up.railway.app"],  # Adjust to specific origins in production (https://reception.up.railway.app)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 # API Key validation function
 def get_api_key(api_key: str = Depends(api_key_header)):
@@ -65,18 +56,15 @@ def get_api_key(api_key: str = Depends(api_key_header)):
         )
     return api_key
 
-
 # Root endpoint (no authentication required)
 @app.get("/")
 def root():
     return JSONResponse(content={"message": "Welcome to the KK Hospital Backend API. For documentation, please refer to /docs."})
 
-
 # Include routers with API key dependency
 app.include_router(patient_router, dependencies=[Depends(get_api_key)])
 app.include_router(bed_router, dependencies=[Depends(get_api_key)])
 app.include_router(tpa_router, dependencies=[Depends(get_api_key)])
-
 
 if __name__ == "__main__":
     import uvicorn
