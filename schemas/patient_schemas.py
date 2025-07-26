@@ -4,30 +4,24 @@ from pydantic import field_validator, field_serializer
 from datetime import datetime, timezone
 import pytz
 import re
+from decimal import Decimal, InvalidOperation
 
 class Address(SQLModel):
     address: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
-    zip: Optional[int] = None
+    zip: Optional[str] = None
 
     @field_validator('zip', mode='before')
     def validate_zip(cls, v):
         if v is None:
             return None
-        if not isinstance(v, int):
-            try:
-                v = int(v)  # Convert string to int (e.g., "123456")
-            except ValueError:
-                raise ValueError("Zip code must be a number")
-        if v < 0:
-            raise ValueError("Zip code must not be negative")
-        if v > 999999:
-            raise ValueError("Zip code must not exceed 6 digits")
-        if v < 10 and v != 0:  # Allow 0, reject 1-9 (single digit)
-            raise ValueError("Zip code must be at least 2 digits unless it is 0")
-        return v
+        v_str = str(v).strip()
+        if not re.fullmatch(r'\d{2,6}', v_str):
+            raise ValueError("Zip code must be 2 to 6 digits")
+        return v_str
+
 
 def get_current_ist_time():
     """Get current IST time reliably"""
