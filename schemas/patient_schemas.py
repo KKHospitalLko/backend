@@ -12,13 +12,13 @@ class Address(SQLModel):
     country: Optional[str] = None
     zip: Optional[int] = None
 
-    @field_validator('address', 'city', 'state', 'country', mode='before')
-    def check_non_empty(cls, v):
-        return None if not v or v.strip() == "" else v
+    # @field_validator('address', 'city', 'state', 'country', mode='before')
+    # def check_non_empty(cls, v):
+    #     return None if not v or v.strip() == "" else v
 
-    @field_validator('zip', mode='before')
-    def handle_invalid_zip(cls, v):
-        return None if v == 0 else v
+    # @field_validator('zip', mode='before')
+    # def handle_invalid_zip(cls, v):
+    #     return None if v == 0 else v
 
 
 # Helper function for IST time
@@ -49,15 +49,15 @@ class PatientDetailsCreateSchema(SQLModel):
     permanentAddress: Address
     registered_by: str  # Required field
 
-    @field_validator('title', 'empanelment', 'bloodGroup', 'registered_by', mode='before')
-    def handle_empty_string(cls, v):
-        if not v or v.strip() == "":
-            raise ValueError(f"registered_by cannot be empty")
-        return v
+    # @field_validator('title', 'empanelment', 'bloodGroup', 'registered_by', mode='before')
+    # def handle_empty_string(cls, v):
+    #     if not v or v.strip() == "":
+    #         raise ValueError(f"registered_by cannot be empty")
+    #     return v
 
-    @field_validator('mobile', 'age', mode='before')
-    def handle_invalid_number(cls, v):
-        return None if v == 0 else v
+    # @field_validator('mobile', 'age', mode='before')
+    # def handle_invalid_number(cls, v):
+    #     return None if v == 0 else v
 
     @field_validator('dateofreg', mode='before')
     def handle_invalid_date(cls, v):
