@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel
 from typing import Optional, List
-from pydantic import field_serializer, field_validator
+from pydantic import field_validator, field_serializer
 from datetime import datetime, timezone
 import pytz
 import re
@@ -12,7 +12,25 @@ class Address(SQLModel):
     country: Optional[str] = None
     zip: Optional[int] = None
 
+    @field_validator('zip', mode='before')
+    def validate_zip(cls, v):
+        if v is None:
+            return None
+        if not isinstance(v, int):
+            try:
+                v = int(v)  # Convert string to int (e.g., "123456")
+            except ValueError:
+                raise ValueError("Zip code must be a number")
+        if v < 0:
+            raise ValueError("Zip code must not be negative")
+        if v > 999999:
+            raise ValueError("Zip code must not exceed 6 digits")
+        if v < 10 and v != 0:  # Allow 0, but reject 1-9 (single digit)
+            raise ValueError("Zip code must be at least 2 digits unless it is 0")
+        return v
+
 def get_current_ist_time():
+    """Get current IST time reliably"""
     utc_now = datetime.now(timezone.utc)
     ist_tz = pytz.timezone('Asia/Kolkata')
     ist_time = utc_now.astimezone(ist_tz)
@@ -22,7 +40,7 @@ class PatientDetailsCreateSchema(SQLModel):
     title: Optional[str] = None
     fullname: str
     sex: Optional[str] = None
-    mobile: Optional[str] = None  # Changed to str
+    mobile: Optional[str] = None
     dateofreg: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
@@ -32,7 +50,7 @@ class PatientDetailsCreateSchema(SQLModel):
     maritalStatus: str
     fatherHusband: str
     doctorIncharge: List[str]
-    regAmount: int
+    regAmount: int  # Required, non-optional
     localAddress: Address
     permanentAddress: Address
     registered_by: str
@@ -41,12 +59,25 @@ class PatientDetailsCreateSchema(SQLModel):
     def validate_mobile(cls, v):
         if v is None or v.strip() == "":
             return None
-        # Remove any non-digit characters for validation (e.g., spaces, dashes, +)
         cleaned_mobile = re.sub(r'\D', '', v)
-        # Example: Validate for Indian mobile numbers (10 digits, starting with 6-9)
         if not re.match(r'^[6-9]\d{9}$', cleaned_mobile):
             raise ValueError("Mobile number must be a valid 10-digit number starting with 6-9")
-        return cleaned_mobile  # Store the cleaned number
+        return cleaned_mobile
+
+    @field_validator('regAmount', mode='before')
+    def validate_reg_amount(cls, v):
+        if v is None:
+            raise ValueError("Registration amount is required")
+        if not isinstance(v, int):
+            try:
+                v = int(v)  # Convert string to int (e.g., "1000")
+            except ValueError:
+                raise ValueError("Registration amount must be a number")
+        if v < 0:
+            raise ValueError("Registration amount must not be negative")
+        if v > 9999999:
+            raise ValueError("Registration amount must not exceed 7 digits")
+        return v
 
     @field_validator('dateofreg', mode='before')
     def handle_invalid_date(cls, v):
@@ -74,7 +105,7 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     title: Optional[str] = None
     fullname: Optional[str] = None
     sex: Optional[str] = None
-    mobile: Optional[str] = None  # Changed to str
+    mobile: Optional[str] = None
     dateofreg: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
@@ -84,15 +115,30 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     maritalStatus: Optional[str] = None
     fatherHusband: Optional[str] = None
     doctorIncharge: Optional[List[str]] = None
-    regAmount: Optional[int] = None
+    regAmount: Optional[int] = None  # Optional for updates
     localAddress: Optional[Address] = None
     permanentAddress: Optional[Address] = None
     registered_by: Optional[str] = None
 
+    @field_validator('regAmount', mode='before')
+    def validate_reg_amount(cls, v):
+        if v is None:
+            return None  # Allow None for updates
+        if not isinstance(v, int):
+            try:
+                v = int(v)
+            except ValueError:
+                raise ValueError("Registration amount must be a number")
+        if v < 0:
+            raise ValueError("Registration amount must not be negative")
+        if v > 9999999:
+            raise ValueError("Registration amount must not exceed 7 digits")
+        return v
+
 class PatientDetailsResponseSchema(SQLModel):
     uhid: Optional[str] = None
     fullname: str
-    mobile: Optional[str] = None  # Changed to str
+    mobile: Optional[str] = None
     regno: Optional[int] = None
     registered_by: str
 
@@ -105,7 +151,7 @@ class PatientDetailsSearchResponseSchema(SQLModel):
     title: Optional[str] = None
     fullname: str
     sex: Optional[str] = None
-    mobile: Optional[str] = None  # Changed to str
+    mobile: Optional[str] = None
     dateofreg: str
     regno: Optional[int] = None
     time: Optional[str] = None
