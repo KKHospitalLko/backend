@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Response, Request
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from routers.patient import router as patient_router
@@ -11,62 +11,66 @@ from starlette.responses import JSONResponse
 # Load environment variables from .env file
 load_dotenv()
 
-# Get API key from environment variable
 API_KEY = os.getenv("API_KEY")
-
 if not API_KEY:
     raise RuntimeError("API_KEY not set in .env file")
 
-# Define API key security scheme for OpenAPI (Swagger UI)
+ALLOWED_ORIGIN = "https://reception.up.railway.app"
+
 api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 
-# Create FastAPI app
 app = FastAPI(
     title="KK Hospital Backend API",
     description="Backend API for KK Hospital",
     version="1.0.0"
 )
 
-# ✅ CORS middleware FIRST (most important - add this before custom middleware)
+# 1. CORS Middleware - Register FIRST!
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://reception.up.railway.app"],
+    allow_origins=[ALLOWED_ORIGIN],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["x-api-key", "content-type", "authorization"],  # Explicitly list headers
+    allow_headers=["x-api-key", "content-type", "authorization"],
 )
 
-# ✅ Custom middleware to handle OPTIONS requests (optional - CORSMiddleware should handle this)
+# 2. Add CORS headers to ALL responses, even errors
 @app.middleware("http")
-async def handle_options_requests(request: Request, call_next):
-    if request.method == "OPTIONS":
-        # Return proper response for preflight
-        response = Response(status_code=204)  # 204 No Content is standard for OPTIONS
-        return response
-    
+async def ensure_cors_on_response(request: Request, call_next):
     response = await call_next(request)
+    origin = request.headers.get("origin")
+    if origin == ALLOWED_ORIGIN:
+        response.headers["access-control-allow-origin"] = origin
+        response.headers["access-control-allow-credentials"] = "true"
+        response.headers["access-control-allow-methods"] = "GET,POST,PUT,DELETE,OPTIONS"
+        response.headers["access-control-allow-headers"] = "x-api-key,content-type,authorization"
     return response
 
-# API Key validation function
-def get_api_key(api_key: str = Depends(api_key_header)):
+# 3. Dependency to check API key (skip for preflight)
+def get_api_key(request: Request, api_key: str = Depends(api_key_header)):
+    if request.method == "OPTIONS":
+        return None  # Allow preflight requests without auth!
     if api_key != API_KEY:
         raise HTTPException(
-            status_code=403, 
+            status_code=403,
             detail="Forbidden: Invalid API Key"
         )
     return api_key
 
-# Root endpoint (no authentication required)
+# 4. Root endpoint (no authentication required)
 @app.get("/")
 def root():
-    return JSONResponse(content={"message": "Welcome to the KK Hospital Backend API. For documentation, please refer to /docs."})
+    return JSONResponse(
+        content={"message": "Welcome to the KK Hospital Backend API. For documentation, please refer to /docs."}
+    )
 
-# Include routers with API key dependency
+# 5. Include routers with API Key dependency
 app.include_router(patient_router, dependencies=[Depends(get_api_key)])
 app.include_router(bed_router, dependencies=[Depends(get_api_key)])
 app.include_router(tpa_router, dependencies=[Depends(get_api_key)])
 
+# 6. Uvicorn startup for Railway
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))  # Railway sets PORT env var
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
