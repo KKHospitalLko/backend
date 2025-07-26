@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from routers.patient import router as patient_router
@@ -27,6 +27,24 @@ app = FastAPI(
     description="Backend API for KK Hospital",
     version="1.0.0"
 )
+
+
+# ✅ Custom middleware to handle OPTIONS requests
+@app.middleware("http")
+async def handle_options_requests(request: Request, call_next):
+    if request.method == "OPTIONS":
+        # Let CORS middleware handle OPTIONS requests
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "https://reception.up.railway.app"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
+    
+    response = await call_next(request)
+    return response
+
+
 
 # CORS middleware
 app.add_middleware(
