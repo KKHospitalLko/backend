@@ -17,6 +17,8 @@ class BedDetailsCreateSchema(SQLModel):
     @field_validator('uhid', mode='before')
     def validate_uhid(cls, v):
         if v is not None:  # Only validate if uhid is provided
+            if v.startswith('-'):
+                raise ValueError("UHID cannot be negative")
             if not v.isdigit() or len(v) != 8:
                 raise ValueError("UHID must be exactly 8 digits")
         return v
