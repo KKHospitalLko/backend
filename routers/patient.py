@@ -10,7 +10,7 @@ import pytz
 router = APIRouter(tags=["Patient"])
 
 def create_db_and_tables():
-    patient_model.SQLModel.metadata.drop_all(engine)
+    # patient_model.SQLModel.metadata.drop_all(engine)
     patient_model.SQLModel.metadata.create_all(engine)
 
 create_db_and_tables()
