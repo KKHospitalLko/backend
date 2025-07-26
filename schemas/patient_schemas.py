@@ -25,7 +25,7 @@ class Address(SQLModel):
             raise ValueError("Zip code must not be negative")
         if v > 999999:
             raise ValueError("Zip code must not exceed 6 digits")
-        if v < 10 and v != 0:  # Allow 0, but reject 1-9 (single digit)
+        if v < 10 and v != 0:  # Allow 0, reject 1-9 (single digit)
             raise ValueError("Zip code must be at least 2 digits unless it is 0")
         return v
 
@@ -50,7 +50,7 @@ class PatientDetailsCreateSchema(SQLModel):
     maritalStatus: str
     fatherHusband: str
     doctorIncharge: List[str]
-    regAmount: int  # Required, non-optional
+    regAmount: int  # Required
     localAddress: Address
     permanentAddress: Address
     registered_by: str
@@ -59,10 +59,10 @@ class PatientDetailsCreateSchema(SQLModel):
     def validate_mobile(cls, v):
         if v is None or v.strip() == "":
             return None
-        cleaned_mobile = re.sub(r'\D', '', v)
-        if not re.match(r'^[6-9]\d{9}$', cleaned_mobile):
-            raise ValueError("Mobile number must be a valid 10-digit number starting with 6-9")
-        return cleaned_mobile
+        cleaned_mobile = re.sub(r'\D', '', v)  # Remove non-digits
+        if not re.match(r'^\d{10}$', cleaned_mobile):
+            raise ValueError("Mobile number must be exactly 10 digits")
+        return cleaned_mobile  # Store as 10-digit string (e.g., "9876543210")
 
     @field_validator('regAmount', mode='before')
     def validate_reg_amount(cls, v):
@@ -77,6 +77,21 @@ class PatientDetailsCreateSchema(SQLModel):
             raise ValueError("Registration amount must not be negative")
         if v > 9999999:
             raise ValueError("Registration amount must not exceed 7 digits")
+        return v
+
+    @field_validator('age', mode='before')
+    def validate_age(cls, v):
+        if v is None:
+            return None
+        if not isinstance(v, int):
+            try:
+                v = int(v)  # Convert string to int (e.g., "25")
+            except ValueError:
+                raise ValueError("Age must be a number")
+        if v < 0:
+            raise ValueError("Age must not be negative")
+        if v > 999:
+            raise ValueError("Age must not exceed 3 digits")
         return v
 
     @field_validator('dateofreg', mode='before')
@@ -134,6 +149,31 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
         if v > 9999999:
             raise ValueError("Registration amount must not exceed 7 digits")
         return v
+
+    @field_validator('mobile', mode='before')
+    def validate_mobile(cls, v):
+        if v is None or v.strip() == "":
+            return None
+        cleaned_mobile = re.sub(r'\D', '', v)  # Remove non-digits
+        if not re.match(r'^\d{10}$', cleaned_mobile):
+            raise ValueError("Mobile number must be exactly 10 digits")
+        return cleaned_mobile  # Store as 10-digit string (e.g., "9876543210")
+    
+    @field_validator('age', mode='before')
+    def validate_age(cls, v):
+        if v is None:
+            return None
+        if not isinstance(v, int):
+            try:
+                v = int(v)  # Convert string to int (e.g., "25")
+            except ValueError:
+                raise ValueError("Age must be a number")
+        if v < 0:
+            raise ValueError("Age must not be negative")
+        if v > 999:
+            raise ValueError("Age must not exceed 3 digits")
+        return v
+
 
 class PatientDetailsResponseSchema(SQLModel):
     uhid: Optional[str] = None
