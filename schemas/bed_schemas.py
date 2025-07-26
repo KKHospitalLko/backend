@@ -14,6 +14,13 @@ class BedDetailsCreateSchema(SQLModel):
             raise ValueError("Value cannot be empty")
         return v
 
+    @field_validator('uhid', mode='before')
+    def validate_uhid(cls, v):
+        if v is not None:  # Only validate if uhid is provided
+            if not v.isdigit() or len(v) != 8:
+                raise ValueError("UHID must be exactly 8 digits")
+        return v
+
 class BedDetailsResponseSchema(SQLModel):
     bed_id: Optional[int] = None
     uhid: Optional[str] = None
