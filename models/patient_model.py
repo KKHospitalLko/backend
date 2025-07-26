@@ -8,7 +8,7 @@ class PatientDetails(SQLModel, table=True):
     title: Optional[str] = None
     fullname: str
     sex: Optional[str] = None
-    mobile: Optional[int] = None
+    mobile: Optional[str] = None
     dateofreg: str
     regno: Optional[int] = None
     time: Optional[str] = None
