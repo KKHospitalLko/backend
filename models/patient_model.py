@@ -10,11 +10,11 @@ class PatientDetails(SQLModel, table=True):
     sex: Optional[str] = None
     mobile: Optional[str] = None
     dateofreg: str
-    regno: Optional[int] = None
+    regno: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
     empanelment: Optional[str] = None
-    bloodGroup: Optional[str] = None
+    # bloodGroup: Optional[str] = None
     religion: str
     maritalStatus: str
     fatherHusband: str

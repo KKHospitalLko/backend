@@ -39,7 +39,7 @@ class PatientDetailsCreateSchema(SQLModel):
     time: Optional[str] = None
     age: Optional[int] = None
     empanelment: Optional[str] = None
-    bloodGroup: Optional[str] = None
+    # bloodGroup: Optional[str] = None
     religion: str
     maritalStatus: str
     fatherHusband: str
@@ -119,7 +119,7 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     time: Optional[str] = None
     age: Optional[int] = None
     empanelment: Optional[str] = None
-    bloodGroup: Optional[str] = None
+    # bloodGroup: Optional[str] = None
     religion: Optional[str] = None
     maritalStatus: Optional[str] = None
     fatherHusband: Optional[str] = None
@@ -173,12 +173,12 @@ class PatientDetailsResponseSchema(SQLModel):
     uhid: Optional[str] = None
     fullname: str
     mobile: Optional[str] = None
-    regno: Optional[int] = None
+    regno: Optional[str] = None
     registered_by: str
 
-    @field_serializer('regno')
-    def serialize_regno(self, regno: Optional[int], _info):
-        return f"{regno:04d}" if regno is not None else None
+    # @field_serializer('regno')
+    # def serialize_regno(self, regno: Optional[int], _info):
+    #     return f"{regno:04d}" if regno is not None else None
 
 class PatientDetailsSearchResponseSchema(SQLModel):
     uhid: Optional[str] = None
@@ -187,11 +187,11 @@ class PatientDetailsSearchResponseSchema(SQLModel):
     sex: Optional[str] = None
     mobile: Optional[str] = None
     dateofreg: str
-    regno: Optional[int] = None
+    regno: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
     empanelment: Optional[str] = None
-    bloodGroup: Optional[str] = None
+    # bloodGroup: Optional[str] = None
     religion: str
     maritalStatus: str
     fatherHusband: str
@@ -201,6 +201,6 @@ class PatientDetailsSearchResponseSchema(SQLModel):
     permanentAddress: Address
     registered_by: str
 
-    @field_serializer('regno')
-    def serialize_regno(self, regno: Optional[int], _info):
-        return f"{regno:04d}" if regno is not None else None
+    # @field_serializer('regno')
+    # def serialize_regno(self, regno: Optional[int], _info):
+    #     return f"{regno:04d}" if regno is not None else None

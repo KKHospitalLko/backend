@@ -2,14 +2,17 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, SQLModel
 from models.bed_model import BedDetails
+from models.patient_model import PatientDetails
 from schemas.bed_schemas import BedDetailsResponseSchema, BedDetailsCreateSchema
 from database import engine
+from schemas.patient_schemas import PatientDetailsResponseSchema
+
 
 router = APIRouter(tags=["Bed"])
 
 # Create tables and initialize beds
 def create_db_and_tables():
-    # BedDetails.metadata.drop_all(engine)  # Drop only beddetails table
+    BedDetails.metadata.drop_all(engine)  # Drop only beddetails table
     BedDetails.metadata.create_all(engine)  # Recreate beddetails table
     # Initialize departments and beds
     with Session(engine) as session:
@@ -92,6 +95,7 @@ def get_all_beds(db: Session = Depends(get_session)):
 
 
 
+
 @router.get('/beds/available', response_model=dict)
 def get_available_beds(db: Session = Depends(get_session)):
     departments = [
@@ -167,6 +171,20 @@ def shift_bed(req: BedDetailsCreateSchema, db: Session = Depends(get_session)):
     db.commit()
     db.refresh(target_bed)
     return target_bed
+
+
+
+@router.get('/beds/patient/{uhid}', response_model=PatientDetailsResponseSchema)
+def get_patient_by_uhid_for_bed(uhid: int, db: Session = Depends(get_session)):
+    patient = db.exec(
+        select(PatientDetails)
+        .where(PatientDetails.uhid == uhid)
+        .order_by(PatientDetails.regno.desc())  # Order by registration date descending
+    ).first()  # Get only the first (most recent) record
+    
+    if not patient:
+        raise HTTPException(status_code=404, detail=f"No patient found for UHID {uhid}")
+    return patient
 
 
 

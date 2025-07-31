@@ -10,7 +10,7 @@ import pytz
 router = APIRouter(tags=["Patient"])
 
 def create_db_and_tables():
-    # patient_model.SQLModel.metadata.drop_all(engine)
+    patient_model.SQLModel.metadata.drop_all(engine)
     patient_model.SQLModel.metadata.create_all(engine)
 
 create_db_and_tables()
@@ -41,7 +41,7 @@ def generate_ids(db: Session, existing_uhid: Optional[str] = None) -> tuple:
             serial_no = 1
         new_uhid = f"{time_str}{serial_no:04d}"
 
-    new_regno = 1
+    new_regno = f"{1:03d}"
     return new_uhid, new_regno
 
 @router.post('/patient', response_model=patient_schemas.PatientDetailsResponseSchema)
@@ -62,7 +62,7 @@ def create_patient(req: patient_schemas.PatientDetailsCreateSchema, db: Session 
         time=req.time or time_of_registration,
         age=req.age,
         empanelment=req.empanelment,
-        bloodGroup=req.bloodGroup,
+        # bloodGroup=req.bloodGroup,
         religion=req.religion,
         maritalStatus=req.maritalStatus,
         fatherHusband=req.fatherHusband,
@@ -110,7 +110,8 @@ def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateS
     if not existing_patient:
         raise HTTPException(status_code=404, detail=f"Patient with UHID {uhid} not found")
 
-    new_regno = existing_patient.regno + 1
+    new_regno_int = int(existing_patient.regno) + 1
+    new_regno= f"{new_regno_int:03d}"
     new_uhid, _ = generate_ids(db, existing_uhid=uhid)
 
     new_patient = patient_model.PatientDetails(
@@ -124,7 +125,7 @@ def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateS
         time=req.time if req.time is not None else existing_patient.time,
         age=req.age if req.age is not None else existing_patient.age,
         empanelment=req.empanelment if req.empanelment is not None else existing_patient.empanelment,
-        bloodGroup=req.bloodGroup if req.bloodGroup is not None else existing_patient.bloodGroup,
+        # bloodGroup=req.bloodGroup if req.bloodGroup is not None else existing_patient.bloodGroup,
         religion=req.religion if req.religion is not None else existing_patient.religion,
         maritalStatus=req.maritalStatus if req.maritalStatus is not None else existing_patient.maritalStatus,
         fatherHusband=req.fatherHusband if req.fatherHusband is not None else existing_patient.fatherHusband,
