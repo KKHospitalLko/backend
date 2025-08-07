@@ -11,7 +11,7 @@ import models.transaction_model as transactionModel
 def create_db_and_tables():
 
     with engine.connect() as conn:
-        conn.execute(text("DROP TABLE IF EXISTS patientdetails CASCADE"))
+        conn.execute(text("DROP TABLE IF EXISTS transaction_summary CASCADE"))
         conn.commit()
         
     transactionModel.TransactionSummary.__table__.drop(engine, checkfirst=True)
