@@ -180,7 +180,7 @@ def shift_bed(req: BedDetailsCreateSchema, db: Session = Depends(get_session)):
 
 
 @router.get('/beds/patient/{uhid}', response_model=PatientDetailsResponseSchema)
-def get_patient_by_uhid_for_bed(uhid: int, db: Session = Depends(get_session)):
+def get_patient_by_uhid_for_bed(uhid: str, db: Session = Depends(get_session)):
     patient = db.exec(
         select(PatientDetails)
         .where(PatientDetails.uhid == uhid)
