@@ -7,7 +7,7 @@ class TransactionSummary(SQLModel, table=True):
     __tablename__ = "transaction_summary"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    patient_uhid: str = Field(foreign_key="patientdetails.uhid", index=True)
+    patient_uhid: str = Field(index=True)
     patient_regno: str = Field(index=True)
     patient_name: str
     admission_date: str

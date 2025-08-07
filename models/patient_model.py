@@ -4,7 +4,7 @@ from sqlalchemy import JSON
 
 class PatientDetails(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    uhid: Optional[str] = Field(default=None, index=True, unique= True) 
+    uhid: Optional[str] = Field(default=None, index=True) 
     title: Optional[str] = None
     fullname: str
     sex: Optional[str] = None
