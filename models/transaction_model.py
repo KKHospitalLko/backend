@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, JSON
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional
 from decimal import Decimal
 
 
