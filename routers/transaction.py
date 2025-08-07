@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 from models.patient_model import PatientDetails
 from models.transaction_model import TransactionSummary
 from schemas.transaction_schemas import TransactionSummaryCreate, PatientDetailsSearchSchemaForTransaction, TransactionSummaryShowSchema, AllTransactionSummaryShowSchema, UpdateTransactionSchema
@@ -9,6 +9,11 @@ import models.transaction_model as transactionModel
 
 
 def create_db_and_tables():
+
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS patientdetails CASCADE"))
+        conn.commit()
+        
     transactionModel.TransactionSummary.__table__.drop(engine, checkfirst=True)
     transactionModel.TransactionSummary.__table__.create(engine)
 

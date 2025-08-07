@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select, SQLModel
+from sqlmodel import Session, select, SQLModel, text
 from models.bed_model import BedDetails
 from models.patient_model import PatientDetails
 from schemas.bed_schemas import BedDetailsResponseSchema, BedDetailsCreateSchema
@@ -12,6 +12,11 @@ router = APIRouter(tags=["Bed"])
 
 # Create tables and initialize beds
 def create_db_and_tables():
+
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS patientdetails CASCADE"))
+        conn.commit()
+        
     BedDetails.__table__.drop(engine, checkfirst=True)
     BedDetails.__table__.create(engine)
     # Initialize departments and beds

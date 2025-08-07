@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from datetime import datetime, timezone
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 import models.patient_model as patient_model
 import schemas.patient_schemas as patient_schemas
 from database import engine
@@ -10,6 +10,11 @@ import pytz
 router = APIRouter(tags=["Patient"])
 
 def create_db_and_tables():
+    
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS patientdetails CASCADE"))
+        conn.commit()
+
     patient_model.PatientDetails.__table__.drop(engine, checkfirst=True)
     patient_model.PatientDetails.__table__.create(engine)
 
