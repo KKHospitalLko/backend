@@ -4,6 +4,7 @@ from fastapi.security import APIKeyHeader
 from routers.patient import router as patient_router
 from routers.bed_alot import router as bed_router
 from routers.tpa import router as tpa_router
+from routers.transaction import router as transaction_router
 from dotenv import load_dotenv
 import os
 from starlette.responses import JSONResponse
@@ -25,7 +26,7 @@ api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 app = FastAPI(
     title="KK Hospital Backend API",
     description="Backend API for KK Hospital",
-    version="1.0.0"
+    version="1.0.1"
 )
 
 
@@ -59,6 +60,7 @@ def root():
 app.include_router(patient_router, dependencies=[Depends(get_api_key)])
 app.include_router(bed_router, dependencies=[Depends(get_api_key)])
 app.include_router(tpa_router, dependencies=[Depends(get_api_key)])
+app.include_router(transaction_router, dependencies=[Depends(get_api_key)])
 
 
 if __name__ == "__main__":

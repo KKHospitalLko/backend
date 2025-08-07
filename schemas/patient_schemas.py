@@ -1,10 +1,10 @@
+from decimal import Decimal
 from sqlmodel import SQLModel
 from typing import Optional, List
-from pydantic import field_validator, field_serializer
+from pydantic import field_validator
 from datetime import datetime, timezone
 import pytz
 import re
-from decimal import Decimal, InvalidOperation
 
 class Address(SQLModel):
     address: Optional[str] = None
@@ -176,9 +176,7 @@ class PatientDetailsResponseSchema(SQLModel):
     regno: Optional[str] = None
     registered_by: str
 
-    # @field_serializer('regno')
-    # def serialize_regno(self, regno: Optional[int], _info):
-    #     return f"{regno:04d}" if regno is not None else None
+    
 
 class PatientDetailsSearchResponseSchema(SQLModel):
     uhid: Optional[str] = None
@@ -201,6 +199,42 @@ class PatientDetailsSearchResponseSchema(SQLModel):
     permanentAddress: Address
     registered_by: str
 
-    # @field_serializer('regno')
-    # def serialize_regno(self, regno: Optional[int], _info):
-    #     return f"{regno:04d}" if regno is not None else None
+  
+
+# Add this new schema for transactions in patient response
+class TransactionInPatientSchema(SQLModel):
+    id: int
+    patient_regno: str
+    transaction_purpose: str
+    amount: Optional[Decimal]
+    payment_mode: str
+    payment_details: Optional[dict] = None  # Add this line
+    transaction_date: str
+    transaction_time: str
+    transaction_no: str
+    created_by: str
+
+
+# Add this new response schema that includes transactions
+class PatientDetailsWithTransactionsSchema(SQLModel):
+    uhid: Optional[str] = None
+    title: Optional[str] = None
+    fullname: str
+    sex: Optional[str] = None
+    mobile: Optional[str] = None
+    dateofreg: str
+    regno: Optional[str] = None
+    time: Optional[str] = None
+    age: Optional[int] = None
+    empanelment: Optional[str] = None
+    religion: str
+    maritalStatus: str
+    fatherHusband: str
+    doctorIncharge: List[str]
+    regAmount: int
+    localAddress: Address
+    permanentAddress: Address
+    registered_by: str
+    
+    # Array of transactions
+    transactions: List[TransactionInPatientSchema] = []

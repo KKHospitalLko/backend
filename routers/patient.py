@@ -10,8 +10,8 @@ import pytz
 router = APIRouter(tags=["Patient"])
 
 def create_db_and_tables():
-    patient_model.SQLModel.metadata.drop_all(engine)
-    patient_model.SQLModel.metadata.create_all(engine)
+    patient_model.PatientDetails.__table__.drop(engine, checkfirst=True)
+    patient_model.PatientDetails.__table__.create(engine)
 
 create_db_and_tables()
 
@@ -145,3 +145,69 @@ def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateS
 def get_all_patients(db: Session = Depends(get_session)):
     result = db.exec(select(patient_model.PatientDetails))
     return result.all()
+
+
+
+# This route give you the details with the array of transactions
+@router.get('/patient/{uhid}/with-transactions', response_model=patient_schemas.PatientDetailsWithTransactionsSchema)
+def get_patient_with_transactions(uhid: str, db: Session = Depends(get_session)):
+    from models.transaction_model import TransactionSummary
+    
+    # Get latest patient
+    patient = db.exec(
+        select(patient_model.PatientDetails)
+        .where(patient_model.PatientDetails.uhid == uhid)
+        .order_by(patient_model.PatientDetails.regno.desc())
+    ).first()
+    
+    if not patient:
+        raise HTTPException(status_code=404, detail=f"No patient found with UHID {uhid}")
+    
+    # ✅ FIX: Get transactions for LATEST REGNO ONLY
+    transactions = db.exec(
+        select(TransactionSummary)
+        .where(
+            TransactionSummary.patient_uhid == uhid,
+            TransactionSummary.patient_regno == patient.regno  # Add this filter for latest regno
+        )
+        .order_by(TransactionSummary.transaction_date.desc())
+    ).all()
+    
+
+    # Convert transactions
+    transaction_list = [
+        patient_schemas.TransactionInPatientSchema(
+            id=t.id,
+            patient_regno=t.patient_regno,
+            transaction_purpose=t.transaction_purpose,
+            amount=t.amount,
+            payment_mode=t.payment_mode,
+            payment_details=t.payment_details,  # Add this line
+            transaction_date=t.transaction_date,
+            transaction_time=t.transaction_time,
+            transaction_no=t.transaction_no,
+            created_by=t.created_by
+        ) for t in transactions
+    ]
+
+    return patient_schemas.PatientDetailsWithTransactionsSchema(
+        uhid=patient.uhid,
+        title=patient.title,
+        fullname=patient.fullname,
+        sex=patient.sex,
+        mobile=patient.mobile,
+        dateofreg=patient.dateofreg,
+        regno=patient.regno,
+        time=patient.time,
+        age=patient.age,
+        empanelment=patient.empanelment,
+        religion=patient.religion,
+        maritalStatus=patient.maritalStatus,
+        fatherHusband=patient.fatherHusband,
+        doctorIncharge=patient.doctorIncharge,
+        regAmount=patient.regAmount,
+        localAddress=patient.localAddress,
+        permanentAddress=patient.permanentAddress,
+        registered_by=patient.registered_by,
+        transactions=transaction_list
+    )
