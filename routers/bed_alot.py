@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select, SQLModel, text
+from sqlmodel import Session, select, text
 from models.bed_model import BedDetails
 from models.patient_model import PatientDetails
 from schemas.bed_schemas import BedDetailsResponseSchema, BedDetailsCreateSchema

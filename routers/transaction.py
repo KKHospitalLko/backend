@@ -96,7 +96,7 @@ def get_patient_for_transaction(uhid: str, db: Session = Depends(get_session)):
 def get_all_transactions_by_uhid(uhid: str, db: Session = Depends(get_session)):
     transactions = db.exec(
         select(TransactionSummary).where(TransactionSummary.patient_uhid == uhid)
-        .order_by(TransactionSummary.transaction_date.desc(), TransactionSummary.transaction_time.desc())
+        .order_by(TransactionSummary.id.desc())
     ).all()
     if not transactions:
         raise HTTPException(status_code=404, detail=f"No transactions found for UHID {uhid}")
@@ -128,80 +128,3 @@ def cancel_transaction(
     return txn
 
 
-# # Additional useful routes for your billing system
-# @router.get("/transactions/patient/{uhid}/regno/{regno}", response_model=List[TransactionSummary])
-# def get_patient_transactions_by_visit(
-#     uhid: str, 
-#     regno: str, 
-#     db: Session = Depends(get_session)
-# ):
-#     """
-#     Get all transactions for a specific patient visit (UHID + Regno combination)
-#     """
-#     transactions = db.exec(
-#         select(TransactionSummary).where(
-#             TransactionSummary.patient_uhid == uhid,
-#             TransactionSummary.patient_regno == regno
-#         ).order_by(
-#             TransactionSummary.transaction_date.desc(), 
-#             TransactionSummary.transaction_time.desc()
-#         )
-#     ).all()
-    
-#     if not transactions:
-#         raise HTTPException(
-#             status_code=404,
-#             detail=f"No transactions found for UHID {uhid} and Regno {regno}"
-#         )
-    
-#     return transactions
-
-# @router.get("/transactions/patient/{uhid}/latest", response_model=List[TransactionSummary])
-# def get_patient_latest_visit_transactions(uhid: str, db: Session = Depends(get_session)):
-#     """
-#     Get all transactions for a patient's latest visit (most recent regno)
-#     """
-#     # First get the latest regno for this UHID
-#     latest_patient = db.exec(
-#         select(PatientDetails)
-#         .where(PatientDetails.uhid == uhid)
-#         .order_by(PatientDetails.regno.desc())
-#     ).first()
-    
-#     if not latest_patient:
-#         raise HTTPException(
-#             status_code=404,
-#             detail=f"No patient found with UHID: {uhid}"
-#         )
-    
-#     # Get transactions for the latest visit
-#     transactions = db.exec(
-#         select(TransactionSummary).where(
-#             TransactionSummary.patient_uhid == uhid,
-#             TransactionSummary.patient_regno == latest_patient.regno
-#         ).order_by(
-#             TransactionSummary.transaction_date.desc(), 
-#             TransactionSummary.transaction_time.desc()
-#         )
-#     ).all()
-    
-#     return transactions  # Return empty list if no transactions found
-
-# @router.get("/transactions/{transaction_no}", response_model=TransactionSummary)
-# def get_transaction_by_number(transaction_no: str, db: Session = Depends(get_session)):
-#     """
-#     Get a specific transaction by transaction number
-#     """
-#     transaction = db.exec(
-#         select(TransactionSummary).where(
-#             TransactionSummary.transaction_no == transaction_no
-#         )
-#     ).first()
-    
-#     if not transaction:
-#         raise HTTPException(
-#             status_code=404,
-#             detail=f"Transaction with number {transaction_no} not found"
-#         )
-    
-#     return transaction
