@@ -154,31 +154,51 @@ def cancel_transaction(
 
 @router.get('/patient/bed/transaction/{uhid}/forbill', response_model=dict)
 def get_bed_by_uhid(uhid: str, db: Session = Depends(get_session)):
-    # Query BedDetails by uhid
-    beds = db.exec(select(BedDetails).where(BedDetails.uhid == uhid)).first()
-    
     # Query PatientDetails by uhid to get the most recent regno
-    patient = db.exec(select(PatientDetails).where(PatientDetails.uhid == uhid).order_by(PatientDetails.regno.desc())).first()
-    
+    patient = db.exec(
+        select(PatientDetails)
+        .where(PatientDetails.uhid == uhid)
+        .order_by(PatientDetails.regno.desc())
+    ).first()
+
     if not patient:
         raise HTTPException(status_code=404, detail=f"No patient found with UHID {uhid}")
-    
-    # Query all transactions for the most recent regno
+
+    # Check if a bill already exists for this patient + latest regno
+    existing_bill = db.exec(
+        select(FinalBillSummary)
+        .where(
+            (FinalBillSummary.patient_uhid == patient.uhid) &
+            (FinalBillSummary.patient_regno == patient.regno) &
+            (FinalBillSummary.status == "ACTIVE")
+        )
+    ).first()
+
+    if existing_bill:
+        raise HTTPException(
+            status_code=400,
+            detail=f"An active bill already exists for UHID {uhid}, Regno {patient.regno}"
+        )
+
+    # Query BedDetails by uhid
+    beds = db.exec(select(BedDetails).where(BedDetails.uhid == uhid)).first()
+
+    # Query all ACTIVE transactions for the most recent regno
     transactions = db.exec(
-    select(TransactionSummary)
-    .where(
-        (TransactionSummary.patient_uhid == patient.uhid) &
-        (TransactionSummary.patient_regno == patient.regno) &
-        (TransactionSummary.status == "ACTIVE")
-    )
-    .order_by(TransactionSummary.id.desc())   # latest first
+        select(TransactionSummary)
+        .where(
+            (TransactionSummary.patient_uhid == patient.uhid) &
+            (TransactionSummary.patient_regno == patient.regno) &
+            (TransactionSummary.status == "ACTIVE")
+        )
+        .order_by(TransactionSummary.id.desc())   # latest first
     ).all()
-    
+
     # Prepare response
     response = {
         "patient": PatientDetailsShowSchemaForBill.model_validate(patient),
         "beds": BedDetailsShowSchemaForBill.model_validate(beds) if beds else None,
-        "transactions": [AllTransactionSummaryShowSchemaForBill.model_validate(transaction) for transaction in transactions] if transactions else None
+        "transactions": [AllTransactionSummaryShowSchemaForBill.model_validate(transaction) for transaction in transactions] if transactions else []
     }
-    
+
     return response

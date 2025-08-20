@@ -27,7 +27,7 @@ api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 app = FastAPI(
     title="KK Hospital Backend API",
     description="Backend API for KK Hospital",
-    version="4.0.0"
+    version="4.0.1"
 )
 
 
