@@ -13,9 +13,9 @@ router = APIRouter(tags=["Bed"])
 # Create tables and initialize beds
 def create_db_and_tables():
 
-    with engine.connect() as conn:
-        conn.execute(text("DROP TABLE IF EXISTS beddetails CASCADE"))
-        conn.commit()
+    # with engine.connect() as conn:
+    #     conn.execute(text("DROP TABLE IF EXISTS beddetails CASCADE"))
+    #     conn.commit()
         
     BedDetails.__table__.drop(engine, checkfirst=True)
     BedDetails.__table__.create(engine)

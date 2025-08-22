@@ -10,9 +10,9 @@ import models.transaction_model as transactionModel
 
 def create_db_and_tables():
 
-    with engine.connect() as conn:
-        conn.execute(text("DROP TABLE IF EXISTS transaction_summary CASCADE"))
-        conn.commit()
+    # with engine.connect() as conn:
+    #     conn.execute(text("DROP TABLE IF EXISTS transaction_summary CASCADE"))
+    #     conn.commit()
         
     transactionModel.TransactionSummary.__table__.drop(engine, checkfirst=True)
     transactionModel.TransactionSummary.__table__.create(engine)
@@ -28,7 +28,7 @@ def get_session():
 @router.post("/transactions", response_model=TransactionSummaryShowSchema)
 def create_transaction(req: TransactionSummaryCreate, db: Session = Depends(get_session)):
     # Validate payment_mode
-    valid_payment_modes = ["CASH", "CARD", "UPI", "CHEQUE", "NEFT", "RTGS"]
+    valid_payment_modes = ["CASH", "CARD", "UPI", "CHEQUE", "CASHLESS", "RTGS"]
     if req.payment_mode not in valid_payment_modes:
         raise HTTPException(
             status_code=400,

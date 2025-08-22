@@ -1,19 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime, timezone
-from sqlmodel import Session, select, text
+from sqlmodel import Session, func, select, text
 import models.patient_model as patient_model
 import schemas.patient_schemas as patient_schemas
 from database import engine
 import pytz
+from models.bill_model import FinalBillSummary
+
 
 router = APIRouter(tags=["Patient"])
 
 def create_db_and_tables():
     
-    with engine.connect() as conn:
-        conn.execute(text("DROP TABLE IF EXISTS patientdetails CASCADE"))
-        conn.commit()
+    # with engine.connect() as conn:
+    #     conn.execute(text("DROP TABLE IF EXISTS patientdetails CASCADE"))
+    #     conn.commit()
 
     patient_model.PatientDetails.__table__.drop(engine, checkfirst=True)
     patient_model.PatientDetails.__table__.create(engine)
@@ -153,66 +155,109 @@ def get_all_patients(db: Session = Depends(get_session)):
 
 
 
-# This route give you the details with the array of transactions
-@router.get('/patient/{uhid}/with-transactions', response_model=patient_schemas.PatientDetailsWithTransactionsSchema)
-def get_patient_with_transactions(uhid: str, db: Session = Depends(get_session)):
-    from models.transaction_model import TransactionSummary
+# @router.get('/patient/all', response_model= List[patient_schemas.PatientDetailsSearchResponseSchema])
+# def get_all_patients_before_discharge(db: Session = Depends(get_session)):
+#     # Step 1: Get each patient's latest regno
+#     latest_regnos = db.exec(
+#         select(
+#             patient_model.PatientDetails.uhid,
+#             func.max(patient_model.PatientDetails.regno).label("latest_regno")
+#         ).group_by(patient_model.PatientDetails.uhid)
+#     ).all()
+
+#     results = []
+
+#     # Step 2: For each latest patient regno, check if bill exists
+#     for uhid, latest_regno in latest_regnos:
+#         patient = db.exec(
+#             select(patient_model.PatientDetails)
+#             .where(
+#                 (patient_model.PatientDetails.uhid == uhid) &
+#                 (patient_model.PatientDetails.regno == latest_regno)
+#             )
+#         ).first()
+
+#         # Skip if active bill exists
+#         existing_bill = db.exec(
+#             select(FinalBillSummary)
+#             .where(
+#                 (FinalBillSummary.patient_uhid == uhid) &
+#                 (FinalBillSummary.patient_regno == latest_regno) &
+#                 (FinalBillSummary.status == "ACTIVE")
+#             )
+#         ).first()
+
+#         if not existing_bill and patient:
+#             results.append(patient)
+
+#     # 'results' now contains all patients of their latest regno without active bills
+
+
+
+
+
+# # This route give you the details with the array of transactions
+# @router.get('/patient/{uhid}/with-transactions', response_model=patient_schemas.PatientDetailsWithTransactionsSchema)
+# def get_patient_with_transactions(uhid: str, db: Session = Depends(get_session)):
+#     from models.transaction_model import TransactionSummary
     
-    # Get latest patient
-    patient = db.exec(
-        select(patient_model.PatientDetails)
-        .where(patient_model.PatientDetails.uhid == uhid)
-        .order_by(patient_model.PatientDetails.regno.desc())
-    ).first()
+#     # Get latest patient
+#     patient = db.exec(
+#         select(patient_model.PatientDetails)
+#         .where(patient_model.PatientDetails.uhid == uhid)
+#         .order_by(patient_model.PatientDetails.regno.desc())
+#     ).first()
     
-    if not patient:
-        raise HTTPException(status_code=404, detail=f"No patient found with UHID {uhid}")
+#     if not patient:
+#         raise HTTPException(status_code=404, detail=f"No patient found with UHID {uhid}")
     
-    # ✅ FIX: Get transactions for LATEST REGNO ONLY
-    transactions = db.exec(
-        select(TransactionSummary)
-        .where(
-            TransactionSummary.patient_uhid == uhid,
-            TransactionSummary.patient_regno == patient.regno  # Add this filter for latest regno
-        )
-        .order_by(TransactionSummary.transaction_date.desc())
-    ).all()
+#     # ✅ FIX: Get transactions for LATEST REGNO ONLY
+#     transactions = db.exec(
+#         select(TransactionSummary)
+#         .where(
+#             TransactionSummary.patient_uhid == uhid,
+#             TransactionSummary.patient_regno == patient.regno  # Add this filter for latest regno
+#         )
+#         .order_by(TransactionSummary.transaction_date.desc())
+#     ).all()
     
 
-    # Convert transactions
-    transaction_list = [
-        patient_schemas.TransactionInPatientSchema(
-            id=t.id,
-            patient_regno=t.patient_regno,
-            transaction_purpose=t.transaction_purpose,
-            amount=t.amount,
-            payment_mode=t.payment_mode,
-            payment_details=t.payment_details,  # Add this line
-            transaction_date=t.transaction_date,
-            transaction_time=t.transaction_time,
-            transaction_no=t.transaction_no,
-            created_by=t.created_by
-        ) for t in transactions
-    ]
+#     # Convert transactions
+#     transaction_list = [
+#         patient_schemas.TransactionInPatientSchema(
+#             id=t.id,
+#             patient_regno=t.patient_regno,
+#             transaction_purpose=t.transaction_purpose,
+#             amount=t.amount,
+#             payment_mode=t.payment_mode,
+#             payment_details=t.payment_details,  # Add this line
+#             transaction_date=t.transaction_date,
+#             transaction_time=t.transaction_time,
+#             transaction_no=t.transaction_no,
+#             created_by=t.created_by
+#         ) for t in transactions
+#     ]
 
-    return patient_schemas.PatientDetailsWithTransactionsSchema(
-        uhid=patient.uhid,
-        title=patient.title,
-        fullname=patient.fullname,
-        sex=patient.sex,
-        mobile=patient.mobile,
-        dateofreg=patient.dateofreg,
-        regno=patient.regno,
-        time=patient.time,
-        age=patient.age,
-        empanelment=patient.empanelment,
-        religion=patient.religion,
-        maritalStatus=patient.maritalStatus,
-        fatherHusband=patient.fatherHusband,
-        doctorIncharge=patient.doctorIncharge,
-        regAmount=patient.regAmount,
-        localAddress=patient.localAddress,
-        permanentAddress=patient.permanentAddress,
-        registered_by=patient.registered_by,
-        transactions=transaction_list
-    )
+#     return patient_schemas.PatientDetailsWithTransactionsSchema(
+#         uhid=patient.uhid,
+#         title=patient.title,
+#         fullname=patient.fullname,
+#         sex=patient.sex,
+#         mobile=patient.mobile,
+#         dateofreg=patient.dateofreg,
+#         regno=patient.regno,
+#         time=patient.time,
+#         age=patient.age,
+#         empanelment=patient.empanelment,
+#         religion=patient.religion,
+#         maritalStatus=patient.maritalStatus,
+#         fatherHusband=patient.fatherHusband,
+#         doctorIncharge=patient.doctorIncharge,
+#         regAmount=patient.regAmount,
+#         localAddress=patient.localAddress,
+#         permanentAddress=patient.permanentAddress,
+#         registered_by=patient.registered_by,
+#         transactions=transaction_list
+#     )
+
+

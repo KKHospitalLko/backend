@@ -15,9 +15,9 @@ router= APIRouter(tags=['Bills'])
 
 def create_db_and_tables():
 
-    with engine.connect() as conn:
-        conn.execute(text("DROP TABLE IF EXISTS finalbillsummary CASCADE"))
-        conn.commit()
+    # with engine.connect() as conn:
+    #     conn.execute(text("DROP TABLE IF EXISTS finalbillsummary CASCADE"))
+    #     conn.commit()
         
     bill_model.FinalBillSummary.__table__.drop(engine, checkfirst=True)
     bill_model.FinalBillSummary.__table__.create(engine)
@@ -73,6 +73,7 @@ def create_final_bill(req: FinalBillSummaryCreate, db: Session = Depends(get_ses
         age=req.age,
         gender=req.gender,
         admission_date=req.admission_date,
+        admission_time= req.admission_time,
         discharge_date=req.discharge_date,
         discharge_time=req.discharge_time,
         consultant_doctor=req.consultant_doctor,

@@ -13,6 +13,7 @@ class FinalBillSummary(SQLModel, table=True):
     age: str
     gender: str
     admission_date: str
+    admission_time: str
     discharge_date: str
     discharge_time: str
     consultant_doctor: str
