@@ -17,8 +17,8 @@ def create_db_and_tables():
     #     conn.execute(text("DROP TABLE IF EXISTS patientdetails CASCADE"))
     #     conn.commit()
 
-    patient_model.PatientDetails.__table__.drop(engine, checkfirst=True)
-    patient_model.PatientDetails.__table__.create(engine)
+    # patient_model.PatientDetails.__table__.drop(engine, checkfirst=True)
+    patient_model.PatientDetails.__table__.create(engine, checkfirst=True)
 
 create_db_and_tables()
 

@@ -19,6 +19,7 @@ class FinalBillSummary(SQLModel, table=True):
     consultant_doctor: str
     room_type: str
     bed_no: str
+    reg_amount: Optional[Decimal] = Field(default=None, decimal_places=2)
     charges_summary: Optional[list] = Field(default=None, sa_type=JSON)
     transaction_breakdown: Optional[list] = Field(default=None, sa_type=JSON)
     medication_discount: Optional[Decimal] = Field(default=None, decimal_places=2)

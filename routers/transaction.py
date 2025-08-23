@@ -14,8 +14,8 @@ def create_db_and_tables():
     #     conn.execute(text("DROP TABLE IF EXISTS transaction_summary CASCADE"))
     #     conn.commit()
         
-    transactionModel.TransactionSummary.__table__.drop(engine, checkfirst=True)
-    transactionModel.TransactionSummary.__table__.create(engine)
+    # transactionModel.TransactionSummary.__table__.drop(engine, checkfirst=True)
+    transactionModel.TransactionSummary.__table__.create(engine, checkfirst=True)
 
 create_db_and_tables()
 

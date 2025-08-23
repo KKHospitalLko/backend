@@ -71,6 +71,7 @@ class FinalBillSummaryCreate(SQLModel):
     consultant_doctor: str
     room_type: str
     bed_no: str
+    reg_amount: Optional[Decimal] = None
     charges_summary: Optional[List[ChargesSummary]] = None
     transaction_breakdown: Optional[List[TransactionBreakdown]] = None
     medication_discount: Optional[Decimal] = None
@@ -104,6 +105,7 @@ class FinalBillSummaryShowSchema(SQLModel):
     consultant_doctor: str
     room_type: str
     bed_no: str
+    reg_amount: Optional[Decimal] = None
     charges_summary: Optional[List[ChargesSummary]] = None
     transaction_breakdown: Optional[List[TransactionBreakdown]] = None
     medication_discount: Optional[Decimal] = None
@@ -121,7 +123,7 @@ class FinalBillSummaryShowSchema(SQLModel):
     @field_serializer(
         "medication_discount", "room_service_discount", 
         "consultancy_charges_discount", "total_charges", 
-        "total_discount", "net_amount", "total_paid", "balance",
+        "total_discount", "net_amount", "total_paid", "balance", "reg_amount",
         when_used="json"
     )
     def format_decimal(self, v: Decimal, _info):

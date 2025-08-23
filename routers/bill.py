@@ -19,8 +19,8 @@ def create_db_and_tables():
     #     conn.execute(text("DROP TABLE IF EXISTS finalbillsummary CASCADE"))
     #     conn.commit()
         
-    bill_model.FinalBillSummary.__table__.drop(engine, checkfirst=True)
-    bill_model.FinalBillSummary.__table__.create(engine)
+    # bill_model.FinalBillSummary.__table__.drop(engine, checkfirst=True)
+    bill_model.FinalBillSummary.__table__.create(engine, checkfirst=True)
 
 create_db_and_tables()
 
@@ -79,6 +79,7 @@ def create_final_bill(req: FinalBillSummaryCreate, db: Session = Depends(get_ses
         consultant_doctor=req.consultant_doctor,
         room_type=req.room_type,
         bed_no=req.bed_no,
+        reg_amount=req.reg_amount,
         charges_summary=charges,  
         transaction_breakdown=txns,  
         medication_discount=req.medication_discount,

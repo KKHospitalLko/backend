@@ -17,8 +17,9 @@ def create_db_and_tables():
     #     conn.execute(text("DROP TABLE IF EXISTS beddetails CASCADE"))
     #     conn.commit()
         
-    BedDetails.__table__.drop(engine, checkfirst=True)
-    BedDetails.__table__.create(engine)
+    # BedDetails.__table__.drop(engine, checkfirst=True)
+    BedDetails.__table__.create(engine, checkfirst=True)
+    
     # Initialize departments and beds
     with Session(engine) as session:
         # Define departments and beds
