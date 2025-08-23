@@ -71,7 +71,7 @@ class TransactionSummaryCreate(SQLModel):
 
     @field_validator('payment_mode')
     def validate_payment_mode(cls, v):
-        valid_modes = ["CASH", "CARD", "UPI", "CHEQUE", "CASHLESS", "RTGS"]
+        valid_modes = ["CASH", "DEBIT / CREDIT CARD", "UPI", "CHEQUE", "CASHLESS"]
         if v not in valid_modes:
             raise ValueError(f"Payment mode must be one of: {', '.join(valid_modes)}")
         return v

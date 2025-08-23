@@ -28,7 +28,7 @@ def get_session():
 @router.post("/transactions", response_model=TransactionSummaryShowSchema)
 def create_transaction(req: TransactionSummaryCreate, db: Session = Depends(get_session)):
     # Validate payment_mode
-    valid_payment_modes = ["CASH", "CARD", "UPI", "CHEQUE", "CASHLESS", "RTGS"]
+    valid_payment_modes = ["CASH", "DEBIT / CREDIT CARD", "UPI", "CHEQUE", "CASHLESS"]
     if req.payment_mode not in valid_payment_modes:
         raise HTTPException(
             status_code=400,
