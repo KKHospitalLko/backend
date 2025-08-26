@@ -15,6 +15,7 @@ load_dotenv()
 
 # Get API key from environment variable
 API_KEY = os.getenv("API_KEY")
+Front_URL = os.getenv("Front_URL")
 
 
 if not API_KEY:
@@ -34,7 +35,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://reception.up.railway.app"],  # Adjust to specific origins in production (https://reception.up.railway.app)
+    allow_origins=[Front_URL],  # Adjust to specific origins in production (https://reception.up.railway.app)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
