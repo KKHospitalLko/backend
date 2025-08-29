@@ -12,35 +12,30 @@ router = APIRouter(tags=["Bed"])
 
 # Create tables and initialize beds
 def create_db_and_tables():
+    # ❌ Remove this to avoid recreating/dropping table
+    # BedDetails.__table__.create(engine, checkfirst=True)
 
-    # with engine.connect() as conn:
-    #     conn.execute(text("DROP TABLE IF EXISTS beddetails CASCADE"))
-    #     conn.commit()
-        
-    # BedDetails.__table__.drop(engine, checkfirst=True)
-    BedDetails.__table__.create(engine, checkfirst=True)
-    
     # Initialize departments and beds
     with Session(engine) as session:
-        # Define departments and beds
         departments = [
-    {"name": "Emergency", "beds": ["E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9"]},
-    {"name": "ICU", "beds": ["ICU-1", "ICU-2", "ICU-3", "ICU-4", "ICU-5", "ICU-6", "ICU-7", "ICU-8", "ICU-9"]},
-    {"name": "NICU", "beds": ["NICU-1", "NICU-2", "NICU-3", "NICU-4", "NICU-5", "NICU-6", "NICU-7", "NICU-8"]},
-    {"name": "HDU", "beds": ["HDU-301", "HDU-302", "HDU-303", "HDU-304", "HDU-305", "HDU-306", "HDU-307", "HDU-308"]},
-    {"name": "Dialysis", "beds": ["D-1", "D-2", "D-3", "D-4", "D-5"]},
-    {"name": "Male Ward", "beds": ["MW-10", "MW-11", "MW-12", "MW-13", "MW-14", "MW-15", "MW-16", "MW-17"]},
-    {"name": "Female Ward", "beds": ["FW-1", "FW-2", "FW-3", "FW-4", "FW-5", "FW-6", "FW-7", "FW-8"]},
-    {"name": "General Ward", "beds": ["GW-206", "GW-207", "GW-208", "GW-209", "GW-210"]},
-    {"name": "General Ward (AC)", "beds": ["GWAC-220", "GWAC-221", "GWAC-222", "GWAC-223"]},
-    {"name": "Post-Op", "beds": ["PO-1", "PO-2", "PO-3", "PO-4", "PO-5", "PO-6", "PO-7", "PO-8"]},
-    {"name": "1st Floor Private", "beds": ["P1-102", "P1-103", "P1-104", "P1-105", "P1-106 (Reserved)", "P1-107", "P1-108", "P1-109", "P1-110"]},
-    {"name": "1st Floor Semi Private", "beds": ["SP1-111 A", "SP1-111 B", "SP1-112 A", "SP1-112 B", "SP1-113 A", "SP1-113 B"]},
-    {"name": "2nd Floor Semi Private", "beds": ["SP2-201 A", "SP2-201 B", "SP2-202 A", "SP2-202 B", "SP2-203", "SP2-204", "SP2-205 A", "SP2-205 B",
-                                               "SP2-211 A", "SP2-211 B", "SP2-212 A", "SP2-212 B", "SP2-213 A", "SP2-213 B", "SP2-214 A", "SP2-214 B",
-                                               "SP2-215 A", "SP2-215 B", "SP2-216 A", "SP2-216 B"]},
-    {"name": "2nd Floor Private", "beds": ["P2-217", "P2-218", "P2-219"]}
-]
+            {"name": "Emergency - ground floor", "beds": ["E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9"]},
+            {"name": "ICU - 3rd Floor", "beds": ["ICU-1", "ICU-2", "ICU-3", "ICU-4", "ICU-5", "ICU-6", "ICU-7", "ICU-8", "ICU-9"]},
+            {"name": "NICU - 2nd Floor", "beds": ["NICU-1", "NICU-2", "NICU-3", "NICU-4", "NICU-5", "NICU-6", "NICU-7", "NICU-8"]},
+            {"name": "HDU - 3rd Floor", "beds": ["HDU-301", "HDU-302", "HDU-303", "HDU-304", "HDU-305", "HDU-306", "HDU-307", "HDU-308"]},
+            {"name": "Dialysis - Ground Floor", "beds": ["D-1", "D-2", "D-3", "D-4", "D-5"]},
+            {"name": "Male Ward - Lower Ground Floor", "beds": ["MW-9", "MW-10", "MW-11", "MW-12", "MW-13", "MW-14", "MW-15", "MW-16", "MW-17", "MW-18", "MW-19"]},  # Added 2 new beds
+            {"name": "Female Ward - Lower Ground Floor", "beds": ["FW-1", "FW-2", "FW-3", "FW-4", "FW-5", "FW-6", "FW-7", "FW-8"]},
+            {"name": "General Ward - 2nd Floor", "beds": ["GW-206", "GW-207", "GW-208", "GW-209", "GW-210"]},
+            {"name": "General Ward (AC) - 2nd Floor", "beds": ["GWAC-220", "GWAC-221", "GWAC-222", "GWAC-223"]},
+            {"name": "Post-Op - 3rd Floor", "beds": ["PO-1", "PO-2", "PO-3", "PO-4", "PO-5", "PO-6", "PO-7", "PO-8", "PO-9"]},
+            {"name": "Private - 1st Floor", "beds": ["P1-102", "P1-103", "P1-104", "P1-105", "P1-106 (Reserved)", "P1-107", "P1-108", "P1-109", "P1-110"]},
+            {"name": "Semi-Private - 1st Floor", "beds": ["SP1-111 A", "SP1-111 B", "SP1-112 A", "SP1-112 B", "SP1-113 A", "SP1-113 B"]},
+            {"name": "Semi-Private - 2nd Floor", "beds": ["SP2-201 A", "SP2-201 B", "SP2-202 A", "SP2-202 B", "SP2-203", "SP2-204", "SP2-205 A", "SP2-205 B",
+                                                         "SP2-211 A", "SP2-211 B", "SP2-212 A", "SP2-212 B", "SP2-213 A", "SP2-213 B", "SP2-214 A", "SP2-214 B",
+                                                         "SP2-215 A", "SP2-215 B", "SP2-216 A", "SP2-216 B", "SP2-217", "SP2-218", "SP2-219", "SP2-220"]},  # Added 4 new beds
+            {"name": "Private - 2nd Floor", "beds": ["P2-217", "P2-218", "P2-219"]}
+        ]
+
         for dept in departments:
             for bed_number in dept["beds"]:
                 if not session.exec(select(BedDetails).where(BedDetails.bed_number == bed_number)).first():
@@ -105,20 +100,20 @@ def get_all_beds(db: Session = Depends(get_session)):
 @router.get('/beds/available', response_model=dict)
 def get_available_beds(db: Session = Depends(get_session)):
     departments = [
-  "Emergency",
-  "ICU",
-  "NICU",
-  "HDU",
-  "Dialysis",
-  "Male Ward",
-  "Female Ward",
-  "General Ward",
-  "General Ward (AC)",
-  "Post-Op",
-  "1st Floor Private",
-  "1st Floor Semi Private",
-  "2nd Floor Semi Private",
-  "2nd Floor Private",
+  "Emergency - ground floor",
+  "ICU - 3rd Floor",
+  "NICU - 2nd Floor",
+  "HDU - 3rd Floor",
+  "Dialysis - Ground Floor",
+  "Male Ward - Lower Ground Floor",
+  "Female Ward - Lower Ground Floor",
+  "General Ward - 2nd Floor",
+  "General Ward (AC) - 2nd Floor",
+  "Post-Op - 3rd Floor",
+  "Private - 1st Floor",
+  "Semi-Private - 1st Floor",
+  "Semi-Private - 2nd Floor",
+  "Private - 2nd Floor",
 ];
     available_beds = {}
     for dept in departments:

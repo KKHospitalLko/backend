@@ -60,6 +60,7 @@ def create_patient(req: patient_schemas.PatientDetailsCreateSchema, db: Session 
 
     new_patient = patient_model.PatientDetails(
         uhid=uhid,
+        adhaar_no=req.adhaar_no,
         title=req.title,
         fullname=req.fullname,
         sex=req.sex,
@@ -98,20 +99,21 @@ def debug_time():
     }
 
 @router.get('/patient/{search_value}', response_model=list[patient_schemas.PatientDetailsSearchResponseSchema])
-def get_patient_by_uhid_or_mobile(search_value: str, db: Session = Depends(get_session)):
+def get_patient_by_uhid_or_mobile_or_adhaar(search_value: str, db: Session = Depends(get_session)):
     # Build query to search by uhid or mobile
     query = select(patient_model.PatientDetails).where(
         (patient_model.PatientDetails.uhid == search_value) |
-        (patient_model.PatientDetails.mobile == search_value)
+        (patient_model.PatientDetails.mobile == search_value) |
+        (patient_model.PatientDetails.adhaar_no == search_value)
     )
     result = db.exec(query.order_by(patient_model.PatientDetails.regno.desc()))
     patients = result.all()
     if not patients:
-        raise HTTPException(status_code=404, detail=f"No patients found with UHID or mobile {search_value}")
+         raise HTTPException(status_code=404, detail=f"No patients found with UHID, mobile, or Aadhaar No. {search_value}")
     return patients
 
 @router.put('/patient/{uhid}', response_model=patient_schemas.PatientDetailsResponseSchema)
-def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateSchema, db: Session = Depends(get_session)):
+def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateSchema, db: Session = Depends        (get_session)):
     result = db.exec(select(patient_model.PatientDetails).where(patient_model.PatientDetails.uhid == uhid).order_by(patient_model.PatientDetails.regno.desc()))
     existing_patient = result.first()
     if not existing_patient:
@@ -123,6 +125,7 @@ def update_patient_by_uhid(uhid: str, req: patient_schemas.PatientDetailsUpdateS
 
     new_patient = patient_model.PatientDetails(
         uhid=new_uhid,
+        adhaar_no=req.adhaar_no if req.adhaar_no is not None else existing_patient.adhaar_no,
         title=req.title if req.title is not None else existing_patient.title,
         fullname=req.fullname if req.fullname is not None else existing_patient.fullname,
         sex=req.sex if req.sex is not None else existing_patient.sex,

@@ -31,6 +31,7 @@ def get_current_ist_time():
     return ist_time
 
 class PatientDetailsCreateSchema(SQLModel):
+    adhaar_no: Optional[str] = None
     title: Optional[str] = None
     fullname: str
     sex: Optional[str] = None
@@ -49,6 +50,17 @@ class PatientDetailsCreateSchema(SQLModel):
     permanentAddress: Address
     registered_by: str
 
+
+    @field_validator('adhaar_no', mode='before') # ✅ ADD THIS VALIDATOR
+    def validate_adhaar_no(cls, v):
+        if v is None or v.strip() == "":
+            return None
+        # Remove any non-digit characters (like spaces)
+        cleaned_adhaar = re.sub(r'\D', '', v) 
+        if not re.fullmatch(r'^\d{12}$', cleaned_adhaar):
+            raise ValueError("Aadhaar number must be exactly 12 digits")
+        return cleaned_adhaar
+    
     @field_validator('mobile', mode='before')
     def validate_mobile(cls, v):
         if v is None or v.strip() == "":
@@ -111,6 +123,7 @@ class PatientDetailsCreateSchema(SQLModel):
         return v or get_current_ist_time().strftime("%I:%M:%S %p")
 
 class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
+    adhaar_no: Optional[str] = None
     title: Optional[str] = None
     fullname: Optional[str] = None
     sex: Optional[str] = None
@@ -171,6 +184,7 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
 
 class PatientDetailsResponseSchema(SQLModel):
     uhid: Optional[str] = None
+    adhaar_no: Optional[str] = None
     fullname: str
     mobile: Optional[str] = None
     regno: Optional[str] = None
@@ -180,6 +194,7 @@ class PatientDetailsResponseSchema(SQLModel):
 
 class PatientDetailsSearchResponseSchema(SQLModel):
     uhid: Optional[str] = None
+    adhaar_no: Optional[str] = None
     title: Optional[str] = None
     fullname: str
     sex: Optional[str] = None
@@ -218,6 +233,7 @@ class TransactionInPatientSchema(SQLModel):
 # Add this new response schema that includes transactions
 class PatientDetailsWithTransactionsSchema(SQLModel):
     uhid: Optional[str] = None
+    adhaar_no: Optional[str] = None
     title: Optional[str] = None
     fullname: str
     sex: Optional[str] = None
