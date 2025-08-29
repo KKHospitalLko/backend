@@ -127,19 +127,38 @@ def get_available_beds(db: Session = Depends(get_session)):
     return {"available_beds": available_beds}
 
 
+# @router.delete('/bed/{bed_number}')
+# def delete_bed(bed_number: str, db: Session = Depends(get_session)):
+#     bed = db.exec(select(BedDetails).where(BedDetails.bed_number == bed_number)).first()
+#     if not bed:
+#         raise HTTPException(status_code=404, detail=f"Bed {bed_number} not found")
+
+#     # Reset bed to available instead of deleting
+#     bed.uhid = None
+#     bed.patient_name = ""
+#     bed.status = "available"
+#     db.add(bed)
+#     db.commit()
+#     return {"message": f"Bed {bed_number} reset and marked as available"}
+
 @router.delete('/bed/{bed_number}')
 def delete_bed(bed_number: str, db: Session = Depends(get_session)):
     bed = db.exec(select(BedDetails).where(BedDetails.bed_number == bed_number)).first()
     if not bed:
         raise HTTPException(status_code=404, detail=f"Bed {bed_number} not found")
-
-    # Reset bed to available instead of deleting
-    bed.uhid = None
-    bed.patient_name = ""
-    bed.status = "available"
-    db.add(bed)
+    db.delete(bed)
     db.commit()
-    return {"message": f"Bed {bed_number} reset and marked as available"}
+    # Recreate the bed as available
+    new_bed = BedDetails(
+    department=bed.department,
+    bed_number=bed.bed_number,
+    patient_name="",
+    uhid=None,
+    status="available"
+    )
+    db.add(new_bed)
+    db.commit()
+    return {"message": f"Bed {bed_number} deleted and marked as available"}
 
 
 @router.put('/bed/shift', response_model=BedDetailsResponseSchema)
