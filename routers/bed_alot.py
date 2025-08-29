@@ -31,7 +31,7 @@ def create_db_and_tables():
         {"name": "Semi-Private - 2nd Floor", "beds": ["SP2-201 A", "SP2-201 B", "SP2-202 A", "SP2-202 B", "SP2-203", "SP2-204", "SP2-205 A", "SP2-205 B",
                                                      "SP2-211 A", "SP2-211 B", "SP2-212 A", "SP2-212 B", "SP2-213 A", "SP2-213 B", "SP2-214 A", "SP2-214 B",
                                                      "SP2-215 A", "SP2-215 B", "SP2-216 A", "SP2-216 B"]},
-        {"name": "Private - 2nd Floor", "beds": ["P2-217", "P2-218", "P2-219"]}
+        {"name": "Private - 2nd Floor", "beds": ["P2-217", "P2-218", "P2-219","P2-220"]}
     ]
 
     # Add only new beds without affecting existing beds
