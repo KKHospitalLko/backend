@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, status
-from sqlmodel import Session, desc, func, select, text
+from sqlmodel import Session, desc, select
 from database import engine
 from models.bill_model import FinalBillSummary
 from schemas.bill_schema import FinalBillSummaryCreate, PatientDetailsShowSchemaForBill, BedDetailsShowSchemaForBill, AllTransactionSummaryShowSchemaForBill, FinalBillSummaryShowSchema, UpdateBillSchema
@@ -64,12 +64,18 @@ def create_final_bill(req: FinalBillSummaryCreate, db: Session = Depends(get_ses
         )
     
     charges = prepare_json_for_db([item.model_dump() for item in req.charges_summary]) if req.charges_summary else None
+
     txns = prepare_json_for_db([item.model_dump() for item in req.transaction_breakdown]) if req.transaction_breakdown else None
+
+    # Prepare JSON for total_discount (single dict/object)
+    total_discount = prepare_json_for_db(req.total_discount.model_dump()) if req.total_discount else None
+
     new_bill = FinalBillSummary(
         final_bill_no=req.final_bill_no,
         patient_uhid=req.patient_uhid,
         patient_regno=req.patient_regno,
         patient_name=req.patient_name,
+        patient_type=req.patient_type,
         age=req.age,
         gender=req.gender,
         admission_date=req.admission_date,
@@ -77,16 +83,14 @@ def create_final_bill(req: FinalBillSummaryCreate, db: Session = Depends(get_ses
         discharge_date=req.discharge_date,
         discharge_time=req.discharge_time,
         consultant_doctor=req.consultant_doctor,
+        empanelment=req.empanelment,
         room_type=req.room_type,
         bed_no=req.bed_no,
         reg_amount=req.reg_amount,
         charges_summary=charges,  
         transaction_breakdown=txns,  
-        medication_discount=req.medication_discount,
-        room_service_discount=req.room_service_discount,
-        consultancy_charges_discount=req.consultancy_charges_discount,
         total_charges=req.total_charges,
-        total_discount=req.total_discount,
+        total_discount=total_discount,
         net_amount=req.net_amount,
         total_paid=req.total_paid,
         balance=req.balance,
@@ -142,7 +146,7 @@ def cancel_transaction(
     if bill.status == "CANCELLED":
         raise HTTPException(status_code=400, detail="Bill is already cancelled")
 
-    bill.status = "cancelled"
+    bill.status = "CANCELLED"
     bill.cancelled_by = req.cancelled_by
 
     db.add(bill)

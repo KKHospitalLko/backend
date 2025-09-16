@@ -14,6 +14,7 @@ class PatientDetails(SQLModel, table=True):
     regno: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
+    patient_type: str #type of patient
     empanelment: Optional[str] = None
     # bloodGroup: Optional[str] = None
     religion: str

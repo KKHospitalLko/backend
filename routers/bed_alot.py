@@ -6,6 +6,7 @@ from models.patient_model import PatientDetails
 from schemas.bed_schemas import BedDetailsResponseSchema, BedDetailsCreateSchema
 from database import engine
 from schemas.patient_schemas import PatientDetailsResponseSchema
+import models.patient_model as patient_model
 
 
 router = APIRouter(tags=["Bed"])
@@ -16,23 +17,81 @@ def create_db_and_tables():
 
     # Define departments and beds
     departments = [
-        {"name": "Emergency - ground floor", "beds": ["E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9"]},
-        {"name": "ICU - 3rd Floor", "beds": ["ICU-1", "ICU-2", "ICU-3", "ICU-4", "ICU-5", "ICU-6", "ICU-7", "ICU-8", "ICU-9"]},
-        {"name": "NICU - 2nd Floor", "beds": ["NICU-1", "NICU-2", "NICU-3", "NICU-4", "NICU-5", "NICU-6", "NICU-7", "NICU-8"]},
-        {"name": "HDU - 3rd Floor", "beds": ["HDU-301", "HDU-302", "HDU-303", "HDU-304", "HDU-305", "HDU-306", "HDU-307", "HDU-308"]},
-        {"name": "Dialysis - Ground Floor", "beds": ["D-1", "D-2", "D-3", "D-4", "D-5"]},
-        {"name": "Male Ward - Lower Ground Floor", "beds": ["MW-9","MW-10", "MW-11", "MW-12", "MW-13", "MW-14", "MW-15", "MW-16", "MW-17"]},
-        {"name": "Female Ward - Lower Ground Floor", "beds": ["FW-1", "FW-2", "FW-3", "FW-4", "FW-5", "FW-6", "FW-7", "FW-8"]},
-        {"name": "General Ward - 2nd Floor", "beds": ["GW-206", "GW-207", "GW-208", "GW-209", "GW-210"]},
-        {"name": "General Ward (AC) - 2nd Floor", "beds": ["GWAC-220", "GWAC-221", "GWAC-222", "GWAC-223"]},
-        {"name": "Post-Op - 3rd Floor", "beds": ["PO-1", "PO-2", "PO-3", "PO-4", "PO-5", "PO-6", "PO-7", "PO-8", "PO-9"]},
-        {"name": "Private - 1st Floor", "beds": ["P1-102", "P1-103", "P1-104", "P1-105", "P1-106 (Reserved)", "P1-107", "P1-108", "P1-109", "P1-110"]},
-        {"name": "Semi-Private - 1st Floor", "beds": ["SP1-111 A", "SP1-111 B", "SP1-112 A", "SP1-112 B", "SP1-113 A", "SP1-113 B"]},
-        {"name": "Semi-Private - 2nd Floor", "beds": ["SP2-201 A", "SP2-201 B", "SP2-202 A", "SP2-202 B", "SP2-203", "SP2-204", "SP2-205 A", "SP2-205 B",
-                                                     "SP2-211 A", "SP2-211 B", "SP2-212 A", "SP2-212 B", "SP2-213 A", "SP2-213 B", "SP2-214 A", "SP2-214 B",
-                                                     "SP2-215 A", "SP2-215 B", "SP2-216 A", "SP2-216 B"]},
-        {"name": "Private - 2nd Floor", "beds": ["P2-217", "P2-218", "P2-219"]}
+        {
+            "name": "Emergency - ground floor",
+            "beds": ["E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9"]
+        },
+        {
+            "name": "ICU - 3rd Floor",
+            "beds": ["ICU-1", "ICU-2", "ICU-3", "ICU-4", "ICU-5", "ICU-6", "ICU-7", "ICU-8", "ICU-9"]
+        },
+        {
+            "name": "NICU - 2nd Floor",
+            "beds": ["NICU-1", "NICU-2", "NICU-3", "NICU-4", "NICU-5", "NICU-6", "NICU-7", "NICU-8"]
+        },
+        {
+            "name": "HDU - 3rd Floor",
+            "beds": ["HDU-301", "HDU-302", "HDU-303", "HDU-304", "HDU-305", "HDU-306", "HDU-307", "HDU-308"]
+        },
+        {
+            "name": "HDU2 - 3rd Floor",
+            "beds": ["HDU-314", "HDU-315", "HDU-316", "HDU-317"]
+        },
+        {
+            "name": "Dialysis - Ground Floor",
+            "beds": ["D-1", "D-2", "D-3", "D-4", "D-5"]
+        },
+        {
+            "name": "Male Ward - Lower Ground Floor",
+            "beds": ["MW-9", "MW-10", "MW-11", "MW-12", "MW-13", "MW-14", "MW-15", "MW-16", "MW-17"]
+        },
+        {
+            "name": "Female Ward - Lower Ground Floor",
+            "beds": ["FW-1", "FW-2", "FW-3", "FW-4", "FW-5", "FW-6", "FW-7", "FW-8"]
+        },
+        {
+            "name": "General Ward - 2nd Floor",
+            "beds": ["GW-206", "GW-207", "GW-208", "GW-209", "GW-210"]
+        },
+        {
+            "name": "General Ward 2 - 2nd Floor",
+            "beds": ["GW-220", "GW-221", "GW-222", "GW-223"]
+        },
+        {
+            "name": "Post-Op - 3rd Floor",
+            "beds": ["PO-309", "PO-310", "PO-311", "PO-312", "PO-313"]
+        },
+        {
+            "name": "Private - 1st Floor",
+            "beds": ["P1-102", "P1-103", "P1-104","P1-105 (Delux Room)","P1-106 (Reserved) (Delux Room)", "P1-107", "P1-108", "P1-109", "P1-110"]
+        },
+        {
+            "name": "Semi-Private - 1st Floor",
+            "beds": ["SP1-111 A", "SP1-111 B", "SP1-112 A", "SP1-112 B", "SP1-113 A", "SP1-113 B"]
+        },
+        {
+            "name": "Semi-Private - 2nd Floor",
+            "beds": [
+                "SP2-201 A", "SP2-201 B", "SP2-202 A", "SP2-202 B",
+                "SP2-205 A", "SP2-205 B", "SP2-211 A", "SP2-211 B", "SP2-212 A", "SP2-212 B",
+                "SP2-213 A", "SP2-213 B", "SP2-214 A", "SP2-214 B", "SP2-215 A", "SP2-215 B",
+                "SP2-216 A", "SP2-216 B"
+            ]
+        },
+        {
+            "name": "Private - 2nd Floor",
+            "beds": [  "P2-203 (Chemo Ward)", "P2-204", "P2-217 (Delux Room)", "P2-218 (Chemo Ward with Delux)", "P2-219 (Delux Room)"]
+        },
+        {
+            "name": "Isolation - 3rd Floor",
+            "beds": ["ISO-318"]
+        },
+	{
+            "name": "Isolation2 - 3rd Floor",
+            "beds": ["ISO-319"]
+        }
     ]
+
 
     # Add only new beds without affecting existing beds
     with Session(engine) as session:
@@ -92,10 +151,24 @@ def create_bed(req: BedDetailsCreateSchema, db: Session = Depends(get_session)):
 
 
 
-@router.get('/beds', response_model=List[BedDetailsResponseSchema])
+@router.get('/beds', response_model=dict)
 def get_all_beds(db: Session = Depends(get_session)):
     beds = db.exec(select(BedDetails)).all()
-    return [BedDetailsResponseSchema.model_validate(bed) for bed in beds]
+    
+    # Convert to response schema
+    bed_list = [BedDetailsResponseSchema.model_validate(bed) for bed in beds]
+    
+    # Count allotted (occupied) beds
+    total_allotted = db.exec(
+        select(BedDetails).where(BedDetails.status == "occupied")
+    ).all()
+    total_allotted_count = len(total_allotted)
+
+    return {
+        "total_allotted": total_allotted_count,
+        "beds": bed_list
+    }
+
 
 
 
@@ -103,20 +176,23 @@ def get_all_beds(db: Session = Depends(get_session)):
 @router.get('/beds/available', response_model=dict)
 def get_available_beds(db: Session = Depends(get_session)):
     departments = [
-  "Emergency - ground floor",
-  "ICU - 3rd Floor",
-  "NICU - 2nd Floor",
-  "HDU - 3rd Floor",
-  "Dialysis - Ground Floor",
-  "Male Ward - Lower Ground Floor",
-  "Female Ward - Lower Ground Floor",
-  "General Ward - 2nd Floor",
-  "General Ward (AC) - 2nd Floor",
-  "Post-Op - 3rd Floor",
-  "Private - 1st Floor",
-  "Semi-Private - 1st Floor",
-  "Semi-Private - 2nd Floor",
-  "Private - 2nd Floor",
+    "Emergency - ground floor",
+    "ICU - 3rd Floor",
+    "NICU - 2nd Floor",
+    "HDU - 3rd Floor",
+    "HDU2 - 3rd Floor",
+    "Dialysis - Ground Floor",
+    "Male Ward - Lower Ground Floor",
+    "Female Ward - Lower Ground Floor",
+    "General Ward - 2nd Floor",
+    "General Ward 2 - 2nd Floor",
+    "Post-Op - 3rd Floor",
+    "Private - 1st Floor",
+    "Semi-Private - 1st Floor",
+    "Semi-Private - 2nd Floor",
+    "Private - 2nd Floor",
+    "Isolation - 3rd Floor",
+    "Isolation2 - 3rd Floor"
 ];
     available_beds = {}
     for dept in departments:
@@ -127,7 +203,7 @@ def get_available_beds(db: Session = Depends(get_session)):
     return {"available_beds": available_beds}
 
 
-@router.delete('/bed/{bed_number}')
+@router.patch('/bed/{bed_number}')
 def delete_bed(bed_number: str, db: Session = Depends(get_session)):
     bed = db.exec(select(BedDetails).where(BedDetails.bed_number == bed_number)).first()
     if not bed:
@@ -194,14 +270,34 @@ def shift_bed(req: BedDetailsCreateSchema, db: Session = Depends(get_session)):
 
 @router.get('/beds/patient/{uhid}', response_model=PatientDetailsResponseSchema)
 def get_patient_by_uhid_for_bed(uhid: str, db: Session = Depends(get_session)):
+
+    # Step 1: Get latest registration for this UHID
+    latest_patient = db.exec(
+        select(patient_model.PatientDetails)
+        .where(patient_model.PatientDetails.uhid == uhid)  # fixed here
+        .order_by(patient_model.PatientDetails.regno.desc())  # latest regno
+        .limit(1)
+    ).first()
+
+    if not latest_patient:
+        raise HTTPException(status_code=404, detail=f"No registration found for UHID {uhid}")
+
+    if latest_patient.patient_type != "IPD":
+        raise HTTPException(
+            status_code=400,
+            detail=f"UHID {uhid} is not registered as IPD (found {latest_patient.patient_type})"
+        )
+
+    # Step 2: Get the most recent record
     patient = db.exec(
         select(PatientDetails)
         .where(PatientDetails.uhid == uhid)
-        .order_by(PatientDetails.regno.desc())  # Order by registration date descending
-    ).first()  # Get only the first (most recent) record
+        .order_by(PatientDetails.regno.desc())
+    ).first()
     
     if not patient:
         raise HTTPException(status_code=404, detail=f"No patient found for UHID {uhid}")
+
     return patient
 
 

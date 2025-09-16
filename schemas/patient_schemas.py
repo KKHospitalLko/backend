@@ -39,6 +39,7 @@ class PatientDetailsCreateSchema(SQLModel):
     dateofreg: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
+    patient_type: str #type of patient
     empanelment: Optional[str] = None
     # bloodGroup: Optional[str] = None
     religion: str
@@ -121,6 +122,15 @@ class PatientDetailsCreateSchema(SQLModel):
                 except ValueError:
                     raise ValueError("time must be in HH:MM:SS (24-hour) or HH:MM:SS AM/PM (12-hour) format")
         return v or get_current_ist_time().strftime("%I:%M:%S %p")
+    
+     # ✅ Field validator for patient_type
+    @field_validator("patient_type")
+    def validate_patient_type(cls, v):
+        allowed = {"OPD", "IPD", "DAYCARE"}
+        if v not in allowed:
+            raise ValueError(f"Patient type must be one of: {', '.join(allowed)}")
+        return v
+
 
 class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     adhaar_no: Optional[str] = None
@@ -131,6 +141,7 @@ class PatientDetailsUpdateSchema(PatientDetailsCreateSchema):
     dateofreg: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
+    patient_type: str #type of patient
     empanelment: Optional[str] = None
     # bloodGroup: Optional[str] = None
     religion: Optional[str] = None
@@ -203,6 +214,7 @@ class PatientDetailsSearchResponseSchema(SQLModel):
     regno: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
+    patient_type: str #type of patient
     empanelment: Optional[str] = None
     # bloodGroup: Optional[str] = None
     religion: str
@@ -215,42 +227,31 @@ class PatientDetailsSearchResponseSchema(SQLModel):
     registered_by: str
 
   
+class PatientTypeUpdateSchema(SQLModel):
+    patient_type: str
 
-# Add this new schema for transactions in patient response
-class TransactionInPatientSchema(SQLModel):
-    id: int
-    patient_regno: str
-    transaction_purpose: str
-    amount: Optional[Decimal]
-    payment_mode: str
-    payment_details: Optional[dict] = None  # Add this line
-    transaction_date: str
-    transaction_time: str
-    transaction_no: str
-    created_by: str
+    # ✅ Field validator for patient_type
+    @field_validator("patient_type")
+    def validate_patient_type(cls, v):
+        allowed = {"OPD", "IPD", "DAYCARE"}
+        if v not in allowed:
+            raise ValueError(f"Patient type must be one of: {', '.join(allowed)}")
+        return v
+    
 
 
-# Add this new response schema that includes transactions
-class PatientDetailsWithTransactionsSchema(SQLModel):
+class PatientFilterSchema(SQLModel):
     uhid: Optional[str] = None
-    adhaar_no: Optional[str] = None
+    regno: Optional[str] = None
     title: Optional[str] = None
     fullname: str
-    sex: Optional[str] = None
-    mobile: Optional[str] = None
     dateofreg: str
-    regno: Optional[str] = None
     time: Optional[str] = None
     age: Optional[int] = None
-    empanelment: Optional[str] = None
-    religion: str
-    maritalStatus: str
-    fatherHusband: str
+    patient_type: str
     doctorIncharge: List[str]
-    regAmount: int
+    empanelment: Optional[str] = None
+    sex: Optional[str] = None
     localAddress: Address
-    permanentAddress: Address
-    registered_by: str
-    
-    # Array of transactions
-    transactions: List[TransactionInPatientSchema] = []
+    dischargedate: Optional[str] = None
+    dischargetime: Optional[str] = None

@@ -6,6 +6,7 @@ from routers.bed_alot import router as bed_router
 from routers.tpa import router as tpa_router
 from routers.transaction import router as transaction_router
 from routers.bill import router as bill_router
+from routers.patient_insights import router as insights_router
 from dotenv import load_dotenv
 import os
 from starlette.responses import JSONResponse
@@ -35,7 +36,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[Front_URL],  # Adjust to specific origins in production (https://reception.up.railway.app)
+    allow_origins=[Front_URL] ,  # Adjust to specific origins in production (https://reception.up.railway.app)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -64,6 +65,7 @@ app.include_router(bed_router, dependencies=[Depends(get_api_key)])
 app.include_router(tpa_router, dependencies=[Depends(get_api_key)])
 app.include_router(transaction_router, dependencies=[Depends(get_api_key)])
 app.include_router(bill_router, dependencies=[Depends(get_api_key)])
+app.include_router(insights_router, dependencies=[Depends(get_api_key)])
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from schemas.transaction_schemas import TransactionSummaryCreate, PatientDetails
 from typing import List
 from database import engine
 import models.transaction_model as transactionModel
-
+import models.patient_model as patient_model
 
 def create_db_and_tables():
 
@@ -77,18 +77,30 @@ def get_transactions(db: Session = Depends(get_session)):
     return transactions
 
 
-# Fixed the route decorator and added missing uhid parameter
+
 @router.get('/transactions/patient/{uhid}', response_model=PatientDetailsSearchSchemaForTransaction)
 def get_patient_for_transaction(uhid: str, db: Session = Depends(get_session)):
-    patient = db.exec(
+
+    # Step 1: Get latest registration for this UHID
+    latest_patient = db.exec(
         select(PatientDetails)
         .where(PatientDetails.uhid == uhid)
-        .order_by(PatientDetails.regno.desc())  # Order by registration date descending
-    ).first()  # Get only the first (most recent) record
-    
-    if not patient:
-        raise HTTPException(status_code=404, detail=f"No patient found for UHID {uhid}")
-    return patient
+        .order_by(PatientDetails.regno.desc())  # latest regno here found out
+        .limit(1)
+    ).first()
+
+    if not latest_patient:
+        raise HTTPException(status_code=404, detail=f"No registration found for UHID {uhid}")
+
+    # Step 2: Ensure patient is IPD
+    if latest_patient.patient_type != "IPD":
+        raise HTTPException(
+            status_code=400,
+            detail=f"UHID {uhid} is not registered as IPD (found {latest_patient.patient_type}), directly generate a bill of it."
+        )
+
+    # Step 3: Return the most recent patient record
+    return latest_patient
 
 
 
