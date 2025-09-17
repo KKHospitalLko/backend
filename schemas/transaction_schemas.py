@@ -32,7 +32,7 @@ class TransactionSummaryCreate(SQLModel):
             raise ValueError("Amount must be a valid number")
         
         # Validate the decimal value
-        if decimal_value <= 0:
+        if decimal_value < 0:
             raise ValueError("Amount must be positive")
         if decimal_value > Decimal('9999999.99'):
             raise ValueError("Amount too large")
@@ -157,6 +157,7 @@ class PatientDetailsSearchSchemaForTransaction(SQLModel):
     fullname: str
     dateofreg: str
     regno: Optional[str] = None
+    empanelment: str
 
 class UpdateTransactionSchema(SQLModel):
     cancelled_by: str
