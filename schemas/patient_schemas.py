@@ -255,3 +255,6 @@ class PatientFilterSchema(SQLModel):
     localAddress: Address
     dischargedate: Optional[str] = None
     dischargetime: Optional[str] = None
+    
+    # ✅ New field
+    department_bed: Optional[str] = None

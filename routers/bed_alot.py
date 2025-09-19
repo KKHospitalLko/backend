@@ -282,10 +282,10 @@ def get_patient_by_uhid_for_bed(uhid: str, db: Session = Depends(get_session)):
     if not latest_patient:
         raise HTTPException(status_code=404, detail=f"No registration found for UHID {uhid}")
 
-    if latest_patient.patient_type != "IPD":
+    if latest_patient.patient_type == "OPD":
         raise HTTPException(
             status_code=400,
-            detail=f"UHID {uhid} is not registered as IPD (found {latest_patient.patient_type})"
+            detail=f"UHID {uhid} is not registered as IPD Or DAYCARE (found {latest_patient.patient_type})"
         )
 
     # Step 2: Get the most recent record

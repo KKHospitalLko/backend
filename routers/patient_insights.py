@@ -6,6 +6,7 @@ import models.patient_model as patient_model
 import schemas.patient_schemas as patient_schemas
 from database import engine
 from models.bill_model import FinalBillSummary
+from models.bed_model import BedDetails
 
 
 
@@ -82,7 +83,6 @@ def get_today_patient_counts(db: Session = Depends(get_session)):
 
 
 
-
 @router.get("/patients/filter", response_model=list[patient_schemas.PatientFilterSchema])
 def filter_patients(
     patient_type: Optional[str] = Query(None),
@@ -92,17 +92,24 @@ def filter_patients(
     empanelment: Optional[str] = Query(None),
     db: Session = Depends(get_session)
 ):
+    # Main query including BedDetails
     query = (
         select(
             patient_model.PatientDetails,
             FinalBillSummary.discharge_date,
-            FinalBillSummary.discharge_time
+            FinalBillSummary.discharge_time,
+            BedDetails.department,
+            BedDetails.bed_number
         )
         .outerjoin(
             FinalBillSummary,
             (FinalBillSummary.patient_uhid == patient_model.PatientDetails.uhid) &
             (FinalBillSummary.patient_regno == patient_model.PatientDetails.regno) &
-            (FinalBillSummary.status != "CANCELLED")    # ✅ ignore cancelled discharges
+            (FinalBillSummary.status != "CANCELLED")
+        )
+        .outerjoin(
+            BedDetails,
+            BedDetails.uhid == patient_model.PatientDetails.uhid
         )
     )
 
@@ -130,12 +137,29 @@ def filter_patients(
     if not result:
         raise HTTPException(status_code=404, detail="No patients found with given filters")
 
-    # Map discharge values
+    # ✅ Find latest regno for each UHID
+    latest_regnos = {}
+    for patient, _, _, _, _ in result:
+        uhid = patient.uhid
+        regno = int(patient.regno) if patient.regno and patient.regno.isdigit() else 0
+        if uhid not in latest_regnos or regno > latest_regnos[uhid]:
+            latest_regnos[uhid] = regno
+
+    # ✅ Map discharge and department/bed values
     patients = []
-    for patient, dischargedate, dischargetime in result:
+    for patient, dischargedate, dischargetime, department, bed_number in result:
         p = patient.model_dump()
         p["dischargedate"] = dischargedate
         p["dischargetime"] = dischargetime
+
+        regno = int(patient.regno) if patient.regno and patient.regno.isdigit() else 0
+
+        # Only assign bed if this is the latest regno for that UHID
+        if regno == latest_regnos.get(patient.uhid) and department and bed_number:
+            p["department_bed"] = f"{department} ({bed_number})"
+        else:
+            p["department_bed"] = None
+
         patients.append(p)
 
     return patients
